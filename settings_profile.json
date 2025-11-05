@@ -1,0 +1,198 @@
+{
+  "Squelch Level": {
+    "uv5r": {
+      "name": "squelch",
+      "value": 1
+    }
+  },
+  "Power Save": {
+    "uv5r": {
+      "name": "save",
+      "value": "1:4"
+    }
+  },
+  "Screen On Time": {
+    "uv5r": {
+      "name": "abr",
+      "value": 5
+    }
+  },
+  "Dual Watch": {
+    "uv5r": {
+      "name": "tdr",
+      "value": true
+    }
+  },
+  "Dual Watch Priority": {
+    "uv5r": {
+      "name": "tdrab",
+      "value": "Off"
+    }
+  },
+  "Alarm": {
+    "uv5r": {
+      "name": "almod",
+      "value": "Site"
+    }
+  },
+  "Voice Prompt": {
+    "uv5r": {
+      "name": "voice",
+      "value": "Off"
+    }
+  },
+  "Beep": {
+    "uv5r": {
+      "name": "beep",
+      "value": false
+    }
+  },
+  "PTT Timeout": {
+    "uv5r": {
+      "name": "timeout",
+      "value": 30
+    }
+  },
+  "Display mode A": {
+    "uv5r": {
+      "name": "mdfa",
+      "value": "Name"
+    }
+  },
+  "Display mode B": {
+    "uv5r": {
+      "name": "mdfb",
+      "value": "Name"
+    }
+  },
+  "Busy Channel Lockout": {
+    "uv5r": {
+      "name": "bcl",
+      "value": false
+    }
+  },
+  "Auto Keyboard Lock": {
+    "uv5r": {
+      "name": "autolk",
+      "value": false
+    }
+  },
+  "FM radio": {
+    "uv5r": {
+      "name": "fmradio",
+      "value": false
+    }
+  },
+  "Rogger Beep": {
+    "uv5r": {
+      "name": "roger",
+      "value": false
+    },
+    "uv82": {
+      "name": "roger",
+      "value": false
+    }
+  },
+  "Rogger Beep (RX)": {
+    "uv82": {
+      "name": "rogerrx",
+      "value": "Off"
+    }
+  },
+  "Squelch Tail Eliminate (HT to HT)": {
+    "uv5r": {
+      "name": "ste",
+      "value": false
+    }
+  },
+  "Squelch Tail Eliminate (repeater)": {
+    "uv5r": {
+      "name": "rpste",
+      "value": "OFF"
+    }
+  },
+  "STE Repeater Delay": {
+    "uv5r": {
+      "name": "rptrl",
+      "value": "OFF"
+    }
+  },
+  "RESET Menu": {
+    "uv5r": {
+      "name": "reset",
+      "value": true
+    }
+  },
+  "All Menus": {
+    "uv5r": {
+      "name": "menu",
+      "value": true
+    }
+  },
+  "Message Line 1": {
+    "uv5r": {
+      "name": "poweron_msg.line1",
+      "value": "  UNS  "
+    }
+  },
+  "Message Line 2": {
+    "uv5r": {
+      "name": "poweron_msg.line2",
+      "value": "TEHNIKA"
+    }
+  },
+  "Power on Message": {
+    "uv5r": {
+      "name": "ponmsg",
+      "value": "Message"
+    }
+  },
+  "Display Channel": {
+    "uv5r": {
+      "name": "displayab",
+      "value": "A"
+    }
+  },
+  "Work Mode": {
+    "uv5r": {
+      "name": "workmode",
+      "value": "Channel"
+    }
+  },
+  "Default channel A": {
+    "uv5r": {
+      "name": "wmchannel.mrcha",
+      "value": 1
+    }
+  },
+  "Default channel B": {
+    "uv5r": {
+      "name": "wmchannel.mrchb",
+      "value": 1
+    }
+  },
+  "ANI ID (when to beep)": {
+    "uv5r": {
+      "name": "ani.aniid",
+      "value": "Off"
+    }
+  },
+  "DTMF Sidetone": {
+    "uv5r": {
+      "name": "dtmfst",
+      "value": "OFF"
+    }
+  },
+  "DTMF On duration": {
+    "uv5r": {
+      "name": "ani.dtmfon",
+      "value": "50 ms"
+    }
+  },
+  "DTMF Off duration": {
+    "uv5r": {
+      "name": "ani.dtmfoff",
+      "value": "50 ms"
+    }
+  }
+}

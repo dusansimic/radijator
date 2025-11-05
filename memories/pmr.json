@@ -1,0 +1,66 @@
+[
+  {
+    "name": "PMR  1",
+    "frequency": 446006250
+  },
+  {
+    "name": "PMR  2",
+    "frequency": 446018750
+  },
+  {
+    "name": "PMR  3",
+    "frequency": 446031250
+  },
+  {
+    "name": "PMR  4",
+    "frequency": 446043750
+  },
+  {
+    "name": "PMR  5",
+    "frequency": 446056250
+  },
+  {
+    "name": "PMR  6",
+    "frequency": 446068750
+  },
+  {
+    "name": "PMR  7",
+    "frequency": 446081250
+  },
+  {
+    "name": "PMR  8",
+    "frequency": 446093750
+  },
+  {
+    "name": "PMR  9",
+    "frequency": 446106250
+  },
+  {
+    "name": "PMR 10",
+    "frequency": 446118750
+  },
+  {
+    "name": "PMR 11",
+    "frequency": 446131250
+  },
+  {
+    "name": "PMR 12",
+    "frequency": 446143750
+  },
+  {
+    "name": "PMR 13",
+    "frequency": 446156250
+  },
+  {
+    "name": "PMR 14",
+    "frequency": 446168750
+  },
+  {
+    "name": "PMR 15",
+    "frequency": 446181250
+  },
+  {
+    "name": "PMR 16",
+    "frequency": 446193750
+  }
+]

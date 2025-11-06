@@ -2,6 +2,7 @@ import argparse
 from chirp.drivers.uv5r import BaofengUV5R, BaofengUV82Radio
 from chirp.drivers.uv6r import UV6R
 from chirp.drivers.baofeng_wp970i import UV9R
+from chirp.drivers.baofeng_uv17Pro import UV25
 from chirp.drivers.mml_jc8810 import RT470XRadio, RT470Radio
 from serial import Serial
 from chirp.chirp_common import Memory, PowerLevel, Radio
@@ -229,11 +230,17 @@ class RadijatorUV82(RadijatorRadio):
     RADIJATOR_SETTINGS_PROFILE_ID = "uv82"
 
 
+@register_radio
+class RadijatorUV25(RadijatorRadio):
+    DRIVER_CLASS = UV25
+    RADIJATOR_SETTINGS_PROFILE_ID = "uv25"
+    RESET_TIME = 4
+
+
 # TODO: Baofeng UV-82 variants
 # TODO: Baofeng UV-17 variants
 # TODO: Baofeng UV-21 variants
 # TODO: Baofeng K5 Plus variants
-# TODO: Baofeng UV-25 variants
 
 
 # TODO: Fix Radio returned unknown identification string

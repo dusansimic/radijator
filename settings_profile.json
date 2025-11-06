@@ -3,24 +3,40 @@
     "uv5r": {
       "name": "squelch",
       "value": 1
+    },
+    "uv25": {
+      "name": "settings.squelch",
+      "value": 1
     }
   },
   "Power Save": {
     "uv5r": {
       "name": "save",
       "value": "1:4"
+    },
+    "uv25": {
+      "name": "settings.savemode",
+      "value": "On"
     }
   },
   "Screen On Time": {
     "uv5r": {
       "name": "abr",
       "value": 5
+    },
+    "uv25": {
+      "name": "settings.backlight",
+      "value": "5 sec"
     }
   },
   "Dual Watch": {
     "uv5r": {
       "name": "tdr",
       "value": true
+    },
+    "uv25": {
+      "name": "settings.dualstandby",
+      "value": "On"
     }
   },
   "Dual Watch Priority": {
@@ -33,23 +49,39 @@
     "uv5r": {
       "name": "almod",
       "value": "Site"
+    },
+    "uv25": {
+      "name": "settings.alarmmode",
+      "value": "Local"
     }
   },
   "Voice Prompt": {
     "uv5r": {
       "name": "voice",
       "value": "Off"
+    },
+    "uv25": {
+      "name": "settings.voicesw",
+      "value": false
     }
   },
   "Beep": {
     "uv5r": {
       "name": "beep",
       "value": false
+    },
+    "uv25": {
+      "name": "settings.beep",
+      "value": "Off"
     }
   },
   "PTT Timeout": {
     "uv5r": {
       "name": "timeout",
+      "value": "30 sec"
+    },
+    "uv25": {
+      "name": "settings.tot",
       "value": "30 sec"
     }
   },
@@ -57,11 +89,19 @@
     "uv5r": {
       "name": "mdfa",
       "value": "Name"
+    },
+    "uv25": {
+      "name": "settings.chadistype",
+      "value": "Name"
     }
   },
   "Display mode B": {
     "uv5r": {
       "name": "mdfb",
+      "value": "Name"
+    },
+    "uv25": {
+      "name": "settings.chbdistype",
       "value": "Name"
     }
   },
@@ -75,17 +115,29 @@
     "uv5r": {
       "name": "autolk",
       "value": false
+    },
+    "uv25": {
+      "name": "settings.autolock",
+      "value": false
     }
   },
   "FM radio": {
     "uv5r": {
       "name": "fmradio",
       "value": false
+    },
+    "uv25": {
+      "name": "settings.fmenable",
+      "value": false
     }
   },
   "Rogger Beep": {
     "uv5r": {
       "name": "roger",
+      "value": false
+    },
+    "uv25": {
+      "name": "settings.roger",
       "value": false
     },
     "uv82": {
@@ -109,17 +161,29 @@
     "uv5r": {
       "name": "rpste",
       "value": "OFF"
+    },
+    "uv25": {
+      "name": "settings.rpttailclear",
+      "value": "0 ms"
     }
   },
   "STE Repeater Delay": {
     "uv5r": {
       "name": "rptrl",
       "value": "OFF"
+    },
+    "uv25": {
+      "name": "settings.rpttaildet",
+      "value": "0 ms"
     }
   },
   "RESET Menu": {
     "uv5r": {
       "name": "reset",
+      "value": true
+    },
+    "uv25": {
+      "name": "settings.rstmenu",
       "value": true
     }
   },
@@ -145,6 +209,10 @@
     "uv5r": {
       "name": "ponmsg",
       "value": "Message"
+    },
+    "uv25": {
+      "name": "settings.powerondistype",
+      "value": "LOGO"
     }
   },
   "Display Channel": {
@@ -156,6 +224,18 @@
   "Work Mode": {
     "uv5r": {
       "name": "workmode",
+      "value": "Channel"
+    }
+  },
+  "Work Mode A": {
+    "uv25": {
+      "name": "settings.chaworkmode",
+      "value": "Channel"
+    }
+  },
+  "Work Mode B": {
+    "uv25": {
+      "name": "settings.chbworkmode",
       "value": "Channel"
     }
   },
@@ -175,22 +255,38 @@
     "uv5r": {
       "name": "ani.aniid",
       "value": "Off"
+    },
+    "uv25": {
+      "name": "ani.aniid",
+      "value": "Off"
     }
   },
   "DTMF Sidetone": {
     "uv5r": {
       "name": "dtmfst",
       "value": "OFF"
+    },
+    "uv25": {
+      "name": "settings.sidetone",
+      "value": "Off"
     }
   },
   "DTMF On duration": {
     "uv5r": {
       "name": "ani.dtmfon",
       "value": "50 ms"
+    },
+    "uv25": {
+      "name": "ani.dtmfon",
+      "value": "50 ms"
     }
   },
   "DTMF Off duration": {
     "uv5r": {
+      "name": "ani.dtmfoff",
+      "value": "50 ms"
+    },
+    "uv25": {
       "name": "ani.dtmfoff",
       "value": "50 ms"
     }

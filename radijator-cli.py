@@ -216,7 +216,6 @@ class RadijatorUV6R(RadijatorRadio):
 
 # TODO: Check if it works
 # TODO: Add to profile
-@register_radio
 class RadijatorUV9R(RadijatorRadio):
     DRIVER_CLASS = UV9R
     RADIJATOR_SETTINGS_PROFILE_ID = "uv9r"

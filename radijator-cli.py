@@ -175,10 +175,8 @@ class RadijatorRadio:
         print("Clearing existing memories...")
         self._clear_memories()
         print("Setting new memories...")
-        next_memory_number = 1
-        for memory in memories:
-            memory.number = next_memory_number
-            next_memory_number += 1
+        for memory_number, memory in enumerate(memories, start=1):
+            memory.number = memory_number
             chirp_memory = RadijatorMemory.to_chirp_memory(memory)
             if verbose:
                 print(chirp_memory)

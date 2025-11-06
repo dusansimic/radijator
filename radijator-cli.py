@@ -95,6 +95,7 @@ class RadijatorMemory:
 
 
 class RadijatorRadio:
+    DRIVER_CLASS: Radio = None
     DEFAULT_POWER_LEVEL: PowerLevel = None
     RESET_TIME = None
     MEMORY_RANGE = None
@@ -103,9 +104,9 @@ class RadijatorRadio:
     radio: Radio = None
     _settings: RadioSettings = None
 
-    def __init__(self, DRIVER_CLASS: Radio, serial_port: str):
-        self.radio = DRIVER_CLASS(
-            Serial(serial_port, baudrate=DRIVER_CLASS.BAUD_RATE, timeout=0.25)
+    def __init__(self, serial_port: str):
+        self.radio = self.DRIVER_CLASS(
+            Serial(serial_port, baudrate=self.DRIVER_CLASS.BAUD_RATE, timeout=0.25)
         )
         features = self.radio.get_features()
         memory_bounds = features.memory_bounds
@@ -200,43 +201,35 @@ class RadijatorUV5R(RadijatorRadio):
     - Baofeng UV-5RA
     """
 
+    DRIVER_CLASS = BaofengUV5R
     RADIJATOR_SETTINGS_PROFILE_ID = "uv5r"
     RESET_TIME = 6
-
-    def __init__(self, serial_port: str):
-        super().__init__(BaofengUV5R, serial_port)
 
 
 # TODO: Check if it works
 # TODO: Add to profile
 @register_radio
 class RadijatorUV6R(RadijatorRadio):
+    DRIVER_CLASS = UV6R
     RADIJATOR_SETTINGS_PROFILE_ID = "uv6r"
     RESET_TIME = 6
-
-    def __init__(self, serial_port: str):
-        super().__init__(UV6R, serial_port)
 
 
 # TODO: Check if it works
 # TODO: Add to profile
 @register_radio
 class RadijatorUV9R(RadijatorRadio):
+    DRIVER_CLASS = UV9R
     RADIJATOR_SETTINGS_PROFILE_ID = "uv9r"
     RESET_TIME = 6
-
-    def __init__(self, serial_port: str):
-        super().__init__(UV9R, serial_port)
 
 
 # TODO: Check if it works
 # TODO: Add to profile
 @register_radio
 class RadijatorUV82(RadijatorRadio):
+    DRIVER_CLASS = BaofengUV82Radio
     RADIJATOR_SETTINGS_PROFILE_ID = "uv82"
-
-    def __init__(self, serial_port: str):
-        super().__init__(BaofengUV82Radio, serial_port)
 
 
 # TODO: Baofeng UV-82 variants
@@ -250,22 +243,18 @@ class RadijatorUV82(RadijatorRadio):
 # TODO: Add to profile
 @register_radio
 class RadijatorRT470X(RadijatorRadio):
+    DRIVER_CLASS = RT470XRadio
     RADIJATOR_SETTINGS_PROFILE_ID = "rt470x"
     RESET_TIME = 3
-
-    def __init__(self, serial_port):
-        super().__init__(RT470XRadio, serial_port)
 
 
 # TODO: Check if it works
 # TODO: Add to profile
 @register_radio
 class RadijatorRT470(RadijatorRadio):
+    DRIVER_CLASS = RT470Radio
     RADIJATOR_SETTINGS_PROFILE_ID = "rt470"
     RESET_TIME = 3
-
-    def __init__(self, serial_port):
-        super().__init__(RT470Radio, serial_port)
 
 
 def main_radijator_cli():

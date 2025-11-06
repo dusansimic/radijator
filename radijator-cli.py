@@ -1,12 +1,11 @@
 import argparse
-from chirp.drivers.uv5r import BaofengUV5R, UV5R_POWER_LEVELS
+from chirp.drivers.uv5r import BaofengUV5R, BaofengUV82Radio
 from chirp.drivers.uv6r import UV6R
 from chirp.drivers.baofeng_wp970i import UV9R
 from chirp.drivers.mml_jc8810 import RT470XRadio, RT470Radio
-from serial.tools import list_ports
 from serial import Serial
 from chirp.chirp_common import Memory, PowerLevel, Radio
-from chirp.settings import RadioSettings, RadioSettingValue
+from chirp.settings import RadioSettings
 import time
 from typing import Iterable
 import json
@@ -112,6 +111,7 @@ class RadijatorRadio:
         memory_bounds = features.memory_bounds
         lower_memory, upper_memory = memory_bounds[0], memory_bounds[1]
         self.MEMORY_RANGE = range(lower_memory, upper_memory + 1)
+        self.DEFAULT_POWER_LEVEL = features.valid_power_levels[0]
 
     def download_fw(self, wait_for_reset: bool = True):
         self.radio.sync_in()
@@ -190,7 +190,6 @@ class RadijatorUV5R(RadijatorRadio):
 
     def __init__(self, serial_port: str):
         super().__init__(BaofengUV5R, serial_port)
-        self.DEFAULT_POWER_LEVEL = UV5R_POWER_LEVELS[0]
         self.RESET_TIME = 6
         self.RADIJATOR_SETTINGS_PROFILE_ID = "uv5r"
 
@@ -200,7 +199,6 @@ class RadijatorUV5R(RadijatorRadio):
 class RadijatorUV6R(RadijatorRadio):
     def __init__(self, serial_port: str):
         super().__init__(UV6R, serial_port)
-        self.DEFAULT_POWER_LEVEL = UV6R.POWER_LEVELS[0]
         self.RESET_TIME = 6
 
 
@@ -209,13 +207,21 @@ class RadijatorUV6R(RadijatorRadio):
 class RadijatorUV9R(RadijatorRadio):
     def __init__(self, serial_port: str):
         super().__init__(UV9R, serial_port)
-        self.DEFAULT_POWER_LEVEL = UV9R.POWER_LEVELS[0]
         self.RESET_TIME = 6
+
+
+# TODO: Check if it works
+# TODO: Add to profile
+class RadijatorUV82(RadijatorRadio):
+    def __init__(self, serial_port: str):
+        super().__init__(BaofengUV82Radio, serial_port)
 
 
 # TODO: Baofeng UV-82 variants
 # TODO: Baofeng UV-17 variants
 # TODO: Baofeng UV-21 variants
+# TODO: Baofeng K5 Plus variants
+# TODO: Baofeng UV-25 variants
 
 
 # TODO: Fix Radio returned unknown identification string

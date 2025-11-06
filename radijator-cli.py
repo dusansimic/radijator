@@ -139,18 +139,20 @@ class RadijatorRadio:
 
         return _profile
 
-    def set_settings_profile(self, profile_file_name: str):
+    def set_settings_profile(self, profile_file_name: str, verbose: bool):
         profile = self._transpose_settings_profile(profile_file_name)
 
         settings = self._settings
 
+        print("Applying settings profile...")
         settings_generator = settings.walk()
         for setting in settings_generator:
             if setting.get_name() in profile:
                 profile_setting = profile[setting.get_name()]
-                print(
-                    f"Setting {profile_setting['pretty_name']} to {profile_setting['value']}"
-                )
+                if verbose:
+                    print(
+                        f"Setting {profile_setting['pretty_name']} to {profile_setting['value']}"
+                    )
                 setting.__setitem__(0, profile_setting["value"])
 
         self.radio.set_settings(settings)
@@ -169,17 +171,29 @@ class RadijatorRadio:
             mem.empty = True
             self.radio.set_memory(mem)
 
-    def set_memories(self, memories: Iterable[RadijatorMemory]):
+    def set_memories(self, memories: Iterable[RadijatorMemory], verbose: bool):
+        print("Clearing existing memories...")
         self._clear_memories()
+        print("Setting new memories...")
         next_memory_number = 1
         for memory in memories:
             memory.number = next_memory_number
             next_memory_number += 1
             chirp_memory = RadijatorMemory.to_chirp_memory(memory)
-            print(chirp_memory)
+            if verbose:
+                print(chirp_memory)
             self.radio.set_memory(chirp_memory)
 
 
+RADIO_MODEL_ID_CLASS_DICT = {}
+
+
+def register_radio(RADIO_CLASS: RadijatorRadio):
+    RADIO_MODEL_ID_CLASS_DICT[RADIO_CLASS.RADIJATOR_SETTINGS_PROFILE_ID] = RADIO_CLASS
+    return RADIO_CLASS
+
+
+@register_radio
 class RadijatorUV5R(RadijatorRadio):
     """
     Supported models:
@@ -188,31 +202,41 @@ class RadijatorUV5R(RadijatorRadio):
     - Baofeng UV-5RA
     """
 
+    RADIJATOR_SETTINGS_PROFILE_ID = "uv5r"
+    RESET_TIME = 6
+
     def __init__(self, serial_port: str):
         super().__init__(BaofengUV5R, serial_port)
-        self.RESET_TIME = 6
-        self.RADIJATOR_SETTINGS_PROFILE_ID = "uv5r"
 
 
 # TODO: Check if it works
 # TODO: Add to profile
+@register_radio
 class RadijatorUV6R(RadijatorRadio):
+    RADIJATOR_SETTINGS_PROFILE_ID = "uv6r"
+    RESET_TIME = 6
+
     def __init__(self, serial_port: str):
         super().__init__(UV6R, serial_port)
-        self.RESET_TIME = 6
 
 
 # TODO: Check if it works
 # TODO: Add to profile
+@register_radio
 class RadijatorUV9R(RadijatorRadio):
+    RADIJATOR_SETTINGS_PROFILE_ID = "uv9r"
+    RESET_TIME = 6
+
     def __init__(self, serial_port: str):
         super().__init__(UV9R, serial_port)
-        self.RESET_TIME = 6
 
 
 # TODO: Check if it works
 # TODO: Add to profile
+@register_radio
 class RadijatorUV82(RadijatorRadio):
+    RADIJATOR_SETTINGS_PROFILE_ID = "uv82"
+
     def __init__(self, serial_port: str):
         super().__init__(BaofengUV82Radio, serial_port)
 
@@ -226,20 +250,24 @@ class RadijatorUV82(RadijatorRadio):
 
 # TODO: Fix Radio returned unknown identification string
 # TODO: Add to profile
+@register_radio
 class RadijatorRT470X(RadijatorRadio):
+    RADIJATOR_SETTINGS_PROFILE_ID = "rt470x"
+    RESET_TIME = 3
+
     def __init__(self, serial_port):
         super().__init__(RT470XRadio, serial_port)
-        self.DEFAULT_POWER_LEVEL = RT470XRadio.POWER_LEVELS[0]
-        self.RESET_TIME = 3
 
 
 # TODO: Check if it works
 # TODO: Add to profile
+@register_radio
 class RadijatorRT470(RadijatorRadio):
+    RADIJATOR_SETTINGS_PROFILE_ID = "rt470"
+    RESET_TIME = 3
+
     def __init__(self, serial_port):
         super().__init__(RT470Radio, serial_port)
-        self.DEFAULT_POWER_LEVEL = RT470Radio.POWER_LEVELS[0]
-        self.RESET_TIME = 3
 
 
 def main_radijator_cli():
@@ -259,14 +287,14 @@ def main_radijator_cli():
     parser.add_argument(
         "-p",
         "--port",
-        required=True,
         help="Serial port of the radio (e.g., COM3 or /dev/ttyUSB0).",
+        default="/dev/ttyUSB0",
     )
     parser.add_argument(
         "-R",
         "--radio-model",
         required=True,
-        choices=["uv5r", "uv6r", "rt470x", "rt470"],
+        choices=RADIO_MODEL_ID_CLASS_DICT.keys(),
         help="Model of the radio.",
     )
     parser.add_argument(
@@ -280,33 +308,31 @@ def main_radijator_cli():
         help="Path to the memory JSON file (required for load-memory command).",
         action="append",
     )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Enable verbose output.",
+    )
 
     args = parser.parse_args()
 
-    radio: RadijatorRadio = {
-        "uv5r": RadijatorUV5R,
-        "uv6r": RadijatorUV6R,
-        "rt470x": RadijatorRT470X,
-        "rt470": RadijatorRT470,
-    }[args.radio_model](args.port)
+    # validate arguments
+    if args.command in ["load-profile", "load-profile-and-memory"] and not args.profile:
+        parser.error("The --profile argument is required for the load-profile command.")
+    if args.command in ["load-memory", "load-profile-and-memory"] and not args.memory:
+        parser.error("The --memory argument is required for the load-memory command.")
 
+    # initialize radio class
+    radio: RadijatorRadio = RADIO_MODEL_ID_CLASS_DICT[args.radio_model](args.port)
+
+    # download firmware and settings
     radio.download_fw(wait_for_reset=args.command != "print-settings")
 
-    if args.command == "load-profile" or args.command == "load-profile-and-memory":
-        if not args.profile:
-            parser.error(
-                "The --profile argument is required for the load-profile command."
-            )
-        radio.set_settings_profile(args.profile)
+    if args.command in ["load-profile", "load-profile-and-memory"]:
+        radio.set_settings_profile(args.profile, args.verbose)
     if args.command == "print-settings":
         radio.print_settings()
-    if args.command == "load-memory" or args.command == "load-profile-and-memory":
-        if not args.memory:
-            parser.error(
-                "The --memory argument is required for the load-memory command."
-            )
-
-        print(args.memory)
+    if args.command in ["load-memory", "load-profile-and-memory"]:
         memories = []
         for memory_file in args.memory:
             with open(memory_file, "r", encoding="utf-8") as f:
@@ -316,7 +342,7 @@ def main_radijator_cli():
                         RadijatorMemory.from_json(mem_data, radio.DEFAULT_POWER_LEVEL)
                     )
 
-        radio.set_memories(memories)
+        radio.set_memories(memories, args.verbose)
 
     if args.command != "print-settings":
         radio.upload_fw()

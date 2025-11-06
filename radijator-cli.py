@@ -208,7 +208,6 @@ class RadijatorUV5R(RadijatorRadio):
 
 # TODO: Check if it works
 # TODO: Add to profile
-@register_radio
 class RadijatorUV6R(RadijatorRadio):
     DRIVER_CLASS = UV6R
     RADIJATOR_SETTINGS_PROFILE_ID = "uv6r"
@@ -226,7 +225,6 @@ class RadijatorUV9R(RadijatorRadio):
 
 # TODO: Check if it works
 # TODO: Add to profile
-@register_radio
 class RadijatorUV82(RadijatorRadio):
     DRIVER_CLASS = BaofengUV82Radio
     RADIJATOR_SETTINGS_PROFILE_ID = "uv82"
@@ -241,16 +239,14 @@ class RadijatorUV82(RadijatorRadio):
 
 # TODO: Fix Radio returned unknown identification string
 # TODO: Add to profile
-@register_radio
 class RadijatorRT470X(RadijatorRadio):
     DRIVER_CLASS = RT470XRadio
     RADIJATOR_SETTINGS_PROFILE_ID = "rt470x"
     RESET_TIME = 3
 
 
-# TODO: Check if it works
+# TODO: Fix Radio returned unknown identification string
 # TODO: Add to profile
-@register_radio
 class RadijatorRT470(RadijatorRadio):
     DRIVER_CLASS = RT470Radio
     RADIJATOR_SETTINGS_PROFILE_ID = "rt470"

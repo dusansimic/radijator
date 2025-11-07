@@ -104,26 +104,47 @@ class RadijatorRadio:
 
     radio: Radio = None
     _settings: RadioSettings = None
+    _serial_port: str = None
 
     def __init__(self, serial_port: str):
-        self.radio = self.DRIVER_CLASS(
-            Serial(serial_port, baudrate=self.DRIVER_CLASS.BAUD_RATE, timeout=0.25)
-        )
+        self.radio = self.DRIVER_CLASS(None)
+        self._serial_port = serial_port
         features = self.radio.get_features()
         memory_bounds = features.memory_bounds
         lower_memory, upper_memory = memory_bounds[0], memory_bounds[1]
         self.MEMORY_RANGE = range(lower_memory, upper_memory + 1)
         self.DEFAULT_POWER_LEVEL = features.valid_power_levels[0]
 
+    def _open_serial(self, serial_port: str) -> Serial:
+        serial_object = Serial(
+            baudrate=self.DRIVER_CLASS.BAUD_RATE,
+            rtscts=self.DRIVER_CLASS.HARDWARE_FLOW,
+            timeout=0.25,
+        )
+        serial_object.rts = self.DRIVER_CLASS.WANTS_RTS
+        serial_object.dtr = self.DRIVER_CLASS.WANTS_DTR
+        serial_object.port = serial_port
+        serial_object.open()
+        return serial_object
+
+    def _close_serial(self, serial: Serial):
+        serial.close()
+
     def download_fw(self, wait_for_reset: bool = True):
+        pipe = self._open_serial(self._serial_port)
+        self.radio.set_pipe(pipe)
         self.radio.sync_in()
         self._settings = self.radio.get_settings()
         if wait_for_reset:
             print(f"Wait {self.RESET_TIME} seconds for radio to reset...")
             time.sleep(self.RESET_TIME)
+        self._close_serial(pipe)
 
     def upload_fw(self):
+        pipe = self._open_serial(self._serial_port)
+        self.radio.set_pipe(pipe)
         self.radio.sync_out()
+        self._close_serial(pipe)
 
     def _transpose_settings_profile(self, profile_file_name: str) -> dict:
         with open(profile_file_name, "r", encoding="utf-8") as f:
@@ -243,16 +264,14 @@ class RadijatorUV25(RadijatorRadio):
 # TODO: Baofeng K5 Plus variants
 
 
-# TODO: Fix Radio returned unknown identification string
-# TODO: Add to profile
+@register_radio
 class RadijatorRT470X(RadijatorRadio):
     DRIVER_CLASS = RT470XRadio
     RADIJATOR_SETTINGS_PROFILE_ID = "rt470x"
     RESET_TIME = 3
 
 
-# TODO: Fix Radio returned unknown identification string
-# TODO: Add to profile
+@register_radio
 class RadijatorRT470(RadijatorRadio):
     DRIVER_CLASS = RT470Radio
     RADIJATOR_SETTINGS_PROFILE_ID = "rt470"

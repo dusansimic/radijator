@@ -7,6 +7,14 @@
     "uv25": {
       "name": "settings.squelch",
       "value": 1
+    },
+    "rt470": {
+      "name": "sql",
+      "value": 1
+    },
+    "rt470x": {
+      "name": "sql",
+      "value": 1
     }
   },
   "Power Save": {
@@ -17,6 +25,14 @@
     "uv25": {
       "name": "settings.savemode",
       "value": "On"
+    },
+    "rt470": {
+      "name": "save",
+      "value": "Deep"
+    },
+    "rt470x": {
+      "name": "save",
+      "value": "Deep"
     }
   },
   "Screen On Time": {
@@ -27,6 +43,14 @@
     "uv25": {
       "name": "settings.backlight",
       "value": "5 sec"
+    },
+    "rt470": {
+      "name": "abr",
+      "value": "5 seconds"
+    },
+    "rt470x": {
+      "name": "abr",
+      "value": "5 seconds"
     }
   },
   "Dual Watch": {
@@ -37,6 +61,14 @@
     "uv25": {
       "name": "settings.dualstandby",
       "value": "On"
+    },
+    "rt470": {
+      "name": "tdr",
+      "value": true
+    },
+    "rt470x": {
+      "name": "tdr",
+      "value": true
     }
   },
   "Dual Watch Priority": {
@@ -53,6 +85,14 @@
     "uv25": {
       "name": "settings.alarmmode",
       "value": "Local"
+    },
+    "rt470": {
+      "name": "almode",
+      "value": "Site"
+    },
+    "rt470x": {
+      "name": "almode",
+      "value": "Site"
     }
   },
   "Voice Prompt": {
@@ -62,6 +102,14 @@
     },
     "uv25": {
       "name": "settings.voicesw",
+      "value": false
+    },
+    "rt470": {
+      "name": "voice",
+      "value": false
+    },
+    "rt470x": {
+      "name": "voice",
       "value": false
     }
   },
@@ -73,6 +121,14 @@
     "uv25": {
       "name": "settings.beep",
       "value": "Off"
+    },
+    "rt470": {
+      "name": "beep",
+      "value": false
+    },
+    "rt470x": {
+      "name": "beep",
+      "value": false
     }
   },
   "PTT Timeout": {
@@ -83,6 +139,14 @@
     "uv25": {
       "name": "settings.tot",
       "value": "30 sec"
+    },
+    "rt470": {
+      "name": "tot",
+      "value": "30 seconds"
+    },
+    "rt470x": {
+      "name": "tot",
+      "value": "30 seconds"
     }
   },
   "Display mode A": {
@@ -93,6 +157,14 @@
     "uv25": {
       "name": "settings.chadistype",
       "value": "Name"
+    },
+    "rt470": {
+      "name": "mdfa",
+      "value": "Name"
+    },
+    "rt470x": {
+      "name": "mdfa",
+      "value": "Name"
     }
   },
   "Display mode B": {
@@ -102,6 +174,14 @@
     },
     "uv25": {
       "name": "settings.chbdistype",
+      "value": "Name"
+    },
+    "rt470": {
+      "name": "mdfb",
+      "value": "Name"
+    },
+    "rt470x": {
+      "name": "mdfb",
       "value": "Name"
     }
   },
@@ -119,6 +199,14 @@
     "uv25": {
       "name": "settings.autolock",
       "value": false
+    },
+    "rt470": {
+      "name": "autolk",
+      "value": "Off"
+    },
+    "rt470x": {
+      "name": "autolk",
+      "value": "Off"
     }
   },
   "FM radio": {
@@ -128,6 +216,14 @@
     },
     "uv25": {
       "name": "settings.fmenable",
+      "value": false
+    },
+    "rt470": {
+      "name": "fmradio",
+      "value": false
+    },
+    "rt470x": {
+      "name": "fmradio",
       "value": false
     }
   },
@@ -143,6 +239,14 @@
     "uv82": {
       "name": "roger",
       "value": false
+    },
+    "rt470": {
+      "name": "roger",
+      "value": "OFF"
+    },
+    "rt470x": {
+      "name": "roger",
+      "value": "OFF"
     }
   },
   "Rogger Beep (RX)": {
@@ -155,6 +259,14 @@
     "uv5r": {
       "name": "ste",
       "value": false
+    },
+    "rt470": {
+      "name": "ste",
+      "value": false
+    },
+    "rt470x": {
+      "name": "ste",
+      "value": false
     }
   },
   "Squelch Tail Eliminate (repeater)": {
@@ -165,6 +277,14 @@
     "uv25": {
       "name": "settings.rpttailclear",
       "value": "0 ms"
+    },
+    "rt470": {
+      "name": "rpste",
+      "value": "Off"
+    },
+    "rt470x": {
+      "name": "rpste",
+      "value": "Off"
     }
   },
   "STE Repeater Delay": {
@@ -175,6 +295,14 @@
     "uv25": {
       "name": "settings.rpttaildet",
       "value": "0 ms"
+    },
+    "rt470": {
+      "name": "rptrl",
+      "value": "Off"
+    },
+    "rt470x": {
+      "name": "rptrl",
+      "value": "Off"
     }
   },
   "RESET Menu": {
@@ -213,6 +341,14 @@
     "uv25": {
       "name": "settings.powerondistype",
       "value": "LOGO"
+    },
+    "rt470": {
+      "name": "ponmsg",
+      "value": "Logo"
+    },
+    "rt470x": {
+      "name": "ponmsg",
+      "value": "Logo"
     }
   },
   "Display Channel": {
@@ -231,12 +367,28 @@
     "uv25": {
       "name": "settings.chaworkmode",
       "value": "Channel"
+    },
+    "rt470": {
+      "name": "vfomra",
+      "value": "Channel Mode"
+    },
+    "rt470x": {
+      "name": "vfomra",
+      "value": "Channel Mode"
     }
   },
   "Work Mode B": {
     "uv25": {
       "name": "settings.chbworkmode",
       "value": "Channel"
+    },
+    "rt470": {
+      "name": "vfomrb",
+      "value": "Channel Mode"
+    },
+    "rt470x": {
+      "name": "vfomrb",
+      "value": "Channel Mode"
     }
   },
   "Default channel A": {
@@ -259,6 +411,14 @@
     "uv25": {
       "name": "ani.aniid",
       "value": "Off"
+    },
+    "rt470": {
+      "name": "pttid",
+      "value": "Off"
+    },
+    "rt470x": {
+      "name": "pttid",
+      "value": "Off"
     }
   },
   "DTMF Sidetone": {
@@ -268,6 +428,14 @@
     },
     "uv25": {
       "name": "settings.sidetone",
+      "value": "Off"
+    },
+    "rt470": {
+      "name": "dtmfst",
+      "value": "Off"
+    },
+    "rt470x": {
+      "name": "dtmfst",
       "value": "Off"
     }
   },
@@ -279,6 +447,14 @@
     "uv25": {
       "name": "ani.dtmfon",
       "value": "50 ms"
+    },
+    "rt470": {
+      "name": "dtmf.dtmfon",
+      "value": "50 ms"
+    },
+    "rt470x": {
+      "name": "dtmf.dtmfon",
+      "value": "50 ms"
     }
   },
   "DTMF Off duration": {
@@ -288,6 +464,14 @@
     },
     "uv25": {
       "name": "ani.dtmfoff",
+      "value": "50 ms"
+    },
+    "rt470": {
+      "name": "dtmf.dtmfoff",
+      "value": "50 ms"
+    },
+    "rt470x": {
+      "name": "dtmf.dtmfoff",
       "value": "50 ms"
     }
   }

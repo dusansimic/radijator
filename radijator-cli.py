@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse
 from chirp.drivers.uv5r import BaofengUV5R, BaofengUV82Radio
 from chirp.drivers.uv6r import UV6R

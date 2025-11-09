@@ -17,6 +17,7 @@ class RadijatorMemory:
     name: str = None
     freq: int = None
     power_level: PowerLevel = None
+    tone: str = None  # valid values: "", "DTCS"
     rdcs_code: int = None
     tdcs_code: int = None
     dcs_polarity: int = None
@@ -29,6 +30,7 @@ class RadijatorMemory:
         name: str,
         freq: int,
         power_level: PowerLevel,
+        tone: str = "",
         rdcs_code: int = 23,
         tdcs_code: int = 23,
         dcs_polarity: str = "NN",
@@ -39,6 +41,7 @@ class RadijatorMemory:
         self.name = name
         self.freq = freq
         self.power_level = power_level
+        self.tone = tone
         self.rdcs_code = rdcs_code
         self.tdcs_code = tdcs_code
         self.dcs_polarity = dcs_polarity
@@ -69,6 +72,7 @@ class RadijatorMemory:
         mem.name = rad_mem.name
         mem.freq = rad_mem.freq
         mem.power = rad_mem.power_level
+        mem.tmode = rad_mem.tone
         mem.rx_dtcs = rad_mem.rdcs_code
         mem.dtcs = rad_mem.tdcs_code
         mem.dtcs_polarity = rad_mem.dcs_polarity
@@ -87,6 +91,7 @@ class RadijatorMemory:
             name=data["name"],
             freq=data["frequency"],
             power_level=power_level,
+            tone=data.get("tone", ""),
             rdcs_code=data.get("rdcs_code", 23),
             tdcs_code=data.get("tdcs_code", 23),
             dcs_polarity=data.get("dcs_polarity", "NN"),

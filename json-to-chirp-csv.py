@@ -12,7 +12,7 @@ def _to_chirp_format(memories):
             "Frequency": memory.get("frequency", 446000000) / 1e6,
             "Duplex": memory.get("duplex", ""),
             "Offset": memory.get("offset", 5000000) / 1e6,
-            "Tone": memory.get("tone", "DTCS"),
+            "Tone": memory.get("tone", ""),
             "rToneFreq": memory.get("rToneFreq", 88.5),
             "cToneFreq": memory.get("cToneFreq", 88.5),
             "DtcsCode": memory.get("tdcs_code", "023"),

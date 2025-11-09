@@ -29,6 +29,7 @@ def main_random_dcs_assign():
     for memory in memories:
         dcs_code = random.choice(DCS_CODES)
         dcs_polarity = random.choice(DCS_POLARITIES)
+        memory["tone"] = "DTCS"
         memory["rdcs_code"] = dcs_code
         memory["tdcs_code"] = dcs_code
         memory["dcs_polarity"] = dcs_polarity

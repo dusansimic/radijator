@@ -134,7 +134,7 @@
   "PTT Timeout": {
     "uv5r": {
       "name": "timeout",
-      "value": "30 sec"
+      "value": "15 sec"
     },
     "uv25": {
       "name": "settings.tot",

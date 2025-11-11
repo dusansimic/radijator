@@ -235,8 +235,8 @@ class RadijatorUV5R(RadijatorRadio):
     RESET_TIME = 6
 
 
-# TODO: Check if it works
 # TODO: Add to profile
+@register_radio
 class RadijatorUV6R(RadijatorRadio):
     DRIVER_CLASS = UV6R
     RADIJATOR_SETTINGS_PROFILE_ID = "uv6r"

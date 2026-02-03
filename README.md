@@ -41,7 +41,7 @@ You can then create an executable bash script in a PATH directory (i.e. `$HOME/.
 
 BASE_DIRECTORY=/path/to/base/directory
 
-source $BASE_DIRECTORY/chirp/bin/activate
+source $BASE_DIRECTORY/chirp/.venv/bin/activate
 export PYTHONPATH="$PYTHONPATH:$BASE_DIRECTORY/chirp:/usr/lib64/python3.14/site-packages"
 python $BASE_DIRECTORY/radijator/radijator.py $@
 deactivate

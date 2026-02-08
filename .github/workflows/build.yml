@@ -1,0 +1,63 @@
+name: Build Radijator
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact-name: radijator-linux
+            executable-path: dist/radijator
+          - os: windows-latest
+            artifact-name: radijator-windows
+            executable-path: dist/radijator.exe
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+
+    - name: Checkout chirp dependency
+      uses: actions/checkout@v6
+      with:
+        repository: kk7ds/chirp
+        path: chirp
+
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.14'
+
+    - name: Install dependencies (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+        grep -v wxPython ./chirp/requirements.txt | pip install -r /dev/stdin
+        pip install -e ./chirp
+
+    - name: Install dependencies (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+        pip install -r ./chirp/requirements.txt
+        pip install -e ./chirp
+
+    - name: Build with PyInstaller
+      run: |
+        pyinstaller radijator.spec
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v6
+      with:
+        name: ${{ matrix.artifact-name }}
+        path: ${{ matrix.executable-path }}
+        retention-days: 30

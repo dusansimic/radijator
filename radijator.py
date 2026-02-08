@@ -7,10 +7,6 @@ import random
 import time
 from typing import Iterable
 
-import sys
-
-sys.path.append("../chirp")
-
 from chirp.drivers.uv5r import BaofengUV5R, BaofengUV82Radio
 from chirp.drivers.uv6r import UV6R
 from chirp.drivers.baofeng_wp970i import UV9R

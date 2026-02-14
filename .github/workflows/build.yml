@@ -9,14 +9,17 @@ on:
 
 jobs:
   build:
+    name: Build on ${{ matrix.pretty-name }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
           - os: ubuntu-latest
+            pretty-name: Linux
             artifact-name: radijator-linux
             executable-path: dist/radijator
           - os: windows-latest
+            pretty-name: Windows
             artifact-name: radijator-windows
             executable-path: dist/radijator.exe
 

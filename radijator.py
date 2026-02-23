@@ -10,8 +10,9 @@ from typing import Iterable
 from chirp.drivers.uv5r import BaofengUV5R, BaofengUV82Radio
 from chirp.drivers.uv6r import UV6R
 from chirp.drivers.baofeng_wp970i import UV9R
-from chirp.drivers.baofeng_uv17Pro import UV25
+from chirp.drivers.baofeng_uv17Pro import UV25, BFK5Plus
 from chirp.drivers.mml_jc8810 import RT470XRadio, RT470Radio
+from chirp.drivers.radtel_rt900 import RT900BT
 from serial import Serial
 from chirp.chirp_common import Memory, PowerLevel, Radio, DTCS_CODES as DCS_CODES
 from chirp.settings import RadioSettings
@@ -275,10 +276,16 @@ class RadijatorUV25(RadijatorRadio):
     RESET_TIME = 4
 
 
-# TODO: Baofeng UV-82 variants
+# TODO: Fix issue with exception when logging
+# TODO: Add to profile
+class RadijatorK5Plus(RadijatorRadio):
+    DRIVER_CLASS = BFK5Plus
+    RADIJATOR_SETTINGS_PROFILE_ID = "k5plus"
+    RESET_TIME = 4
+
+
 # TODO: Baofeng UV-17 variants
 # TODO: Baofeng UV-21 variants
-# TODO: Baofeng K5 Plus variants
 
 
 @register_radio
@@ -293,6 +300,15 @@ class RadijatorRT470(RadijatorRadio):
     DRIVER_CLASS = RT470Radio
     RADIJATOR_SETTINGS_PROFILE_ID = "rt470"
     RESET_TIME = 3
+
+
+# TODO: Fix issue with exception when logging
+# TODO: Add to profile
+@register_radio
+class RadijatorRT900BT(RadijatorRadio):
+    DRIVER_CLASS = RT900BT
+    RADIJATOR_SETTINGS_PROFILE_ID = "rt900bt"
+    RESET_TIME = 5
 
 
 # ============================================================================

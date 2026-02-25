@@ -13,7 +13,7 @@ from chirp.drivers.baofeng_wp970i import UV9R
 from chirp.drivers.baofeng_uv17Pro import UV25, BFK5Plus
 from chirp.drivers.mml_jc8810 import RT470XRadio, RT470Radio
 from chirp.drivers.radtel_rt900 import RT900BT
-from serial import Serial
+from chirp.wxui.serialtrace import SerialTrace
 from chirp.chirp_common import Memory, PowerLevel, Radio, DTCS_CODES as DCS_CODES
 from chirp.settings import RadioSettings
 
@@ -132,8 +132,8 @@ class RadijatorRadio:
         self.MEMORY_RANGE = range(lower_memory, upper_memory + 1)
         self.DEFAULT_POWER_LEVEL = features.valid_power_levels[0]
 
-    def _open_serial(self, serial_port: str) -> Serial:
-        serial_object = Serial(
+    def _open_serial(self, serial_port: str) -> SerialTrace:
+        serial_object = SerialTrace(
             baudrate=self.DRIVER_CLASS.BAUD_RATE,
             rtscts=self.DRIVER_CLASS.HARDWARE_FLOW,
             timeout=0.25,
@@ -144,7 +144,7 @@ class RadijatorRadio:
         serial_object.open()
         return serial_object
 
-    def _close_serial(self, serial: Serial):
+    def _close_serial(self, serial: SerialTrace):
         serial.close()
 
     def download_fw(self, wait_for_reset: bool = True):

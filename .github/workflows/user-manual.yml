@@ -1,0 +1,38 @@
+name: Build User Manual
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'user-manual/**'
+      - '.github/workflows/user-manual.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'user-manual/**'
+      - '.github/workflows/user-manual.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Compile PDF
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+      with:
+        lfs: true
+
+    - name: Set up Typst
+      uses: typst-community/setup-typst@v5
+
+    - name: Compile user manual
+      run: typst compile --root user-manual user-manual/main.typ user-manual/radijator-manual.pdf
+
+    - name: Upload PDF artifact
+      uses: actions/upload-artifact@v6
+      with:
+        name: radijator-user-manual
+        path: user-manual/radijator-manual.pdf
+        retention-days: 30

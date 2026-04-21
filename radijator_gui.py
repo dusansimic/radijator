@@ -30,6 +30,8 @@ def main():
 if __name__ == "__main__":
     try:
         main()
+    except (SystemExit, KeyboardInterrupt):
+        raise
     except BaseException as e:
         _log_crash(e)
         raise

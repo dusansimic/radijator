@@ -13,9 +13,16 @@ from chirp.drivers.baofeng_wp970i import UV9R
 from chirp.drivers.baofeng_uv17Pro import UV25, BFK5Plus
 from chirp.drivers.mml_jc8810 import RT470XRadio, RT470Radio
 from chirp.drivers.radtel_rt900 import RT900BT
-from chirp.wxui.serialtrace import SerialTrace
 from chirp.chirp_common import Memory, PowerLevel, Radio, DTCS_CODES as DCS_CODES
 from chirp.settings import RadioSettings
+
+# chirp.wxui.serialtrace hijacks sys.stdout/sys.stderr at import time,
+# routing them into ~/.chirp/debug.log. Save and restore around the import.
+import sys as _sys
+_saved_stdout, _saved_stderr = _sys.stdout, _sys.stderr
+from chirp.wxui.serialtrace import SerialTrace
+_sys.stdout, _sys.stderr = _saved_stdout, _saved_stderr
+del _sys, _saved_stdout, _saved_stderr
 
 __version__ = "1.0.0"
 
@@ -649,6 +656,8 @@ def _log_crash(exc, name: str):
 if __name__ == "__main__":
     try:
         main()
+    except (SystemExit, KeyboardInterrupt):
+        raise
     except BaseException as e:
         _log_crash(e, "radijator")
         raise

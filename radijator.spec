@@ -1,12 +1,17 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules
+
+chirp_hidden = collect_submodules('chirp')
+chirp_data = collect_data_files('chirp')
+
 
 cli_a = Analysis(
     ['radijator.py'],
     pathex=[],
     binaries=[],
-    datas=[("chirp/chirp", "chirp")],
-    hiddenimports=[],
+    datas=chirp_data,
+    hiddenimports=chirp_hidden,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -42,8 +47,8 @@ gui_a = Analysis(
     ['radijator_gui.py'],
     pathex=[],
     binaries=[],
-    datas=[("chirp/chirp", "chirp")],
-    hiddenimports=[],
+    datas=chirp_data,
+    hiddenimports=chirp_hidden,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

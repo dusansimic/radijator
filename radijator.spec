@@ -2,7 +2,9 @@
 
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
-chirp_hidden = collect_submodules('chirp')
+chirp_hidden = [
+    m for m in collect_submodules('chirp') if not m.startswith('chirp.wxui')
+] + ['chirp.wxui.serialtrace']
 chirp_data = collect_data_files('chirp')
 
 

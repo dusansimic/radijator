@@ -147,13 +147,13 @@ class RadijatorRadio:
     def _close_serial(self, serial: SerialTrace):
         serial.close()
 
-    def download_fw(self, wait_for_reset: bool = True):
+    def download_fw(self, wait_for_reset: bool = True, log_fn=print):
         pipe = self._open_serial(self._serial_port)
         self.radio.set_pipe(pipe)
         self.radio.sync_in()
         self._settings = self.radio.get_settings()
         if wait_for_reset:
-            print(f"Wait {self.RESET_TIME} seconds for radio to reset...")
+            log_fn(f"Wait {self.RESET_TIME} seconds for radio to reset...")
             time.sleep(self.RESET_TIME)
         self._close_serial(pipe)
 
@@ -179,18 +179,18 @@ class RadijatorRadio:
 
         return _profile
 
-    def set_settings_profile(self, profile_file_name: str, verbose: bool):
+    def set_settings_profile(self, profile_file_name: str, verbose: bool, log_fn=print):
         profile = self._transpose_settings_profile(profile_file_name)
 
         settings = self._settings
 
-        print("Applying settings profile...")
+        log_fn("Applying settings profile...")
         settings_generator = settings.walk()
         for setting in settings_generator:
             if setting.get_name() in profile:
                 profile_setting = profile[setting.get_name()]
                 if verbose:
-                    print(
+                    log_fn(
                         f"Setting {profile_setting['pretty_name']} to {profile_setting['value']}"
                     )
                 setting.__setitem__(0, profile_setting["value"])
@@ -198,29 +198,42 @@ class RadijatorRadio:
         self.radio.set_settings(settings)
         self._settings = self.radio.get_settings()
 
-    def print_settings(self):
+    def print_settings(self, log_fn=print):
         settings = self._settings
 
         settings_generator = settings.walk()
         for setting in settings_generator:
-            print(f"{setting.get_name()}: {setting.value}")
+            log_fn(f"{setting.get_name()}: {setting.value}")
 
-    def _clear_memories(self):
-        for i in self.MEMORY_RANGE:
+    def _clear_memories(self, progress_fn=None):
+        total = len(self.MEMORY_RANGE)
+        for step, i in enumerate(self.MEMORY_RANGE, start=1):
             mem = self.radio.get_memory(i)
             mem.empty = True
             self.radio.set_memory(mem)
+            if progress_fn:
+                progress_fn(step, total, "Clearing memories")
 
-    def set_memories(self, memories: Iterable[RadijatorMemory], verbose: bool):
-        print("Clearing existing memories...")
-        self._clear_memories()
-        print("Setting new memories...")
+    def set_memories(
+        self,
+        memories: Iterable[RadijatorMemory],
+        verbose: bool,
+        log_fn=print,
+        progress_fn=None,
+    ):
+        log_fn("Clearing existing memories...")
+        self._clear_memories(progress_fn=progress_fn)
+        log_fn("Setting new memories...")
+        memories = list(memories)
+        total = len(memories)
         for memory_number, memory in enumerate(memories, start=1):
             memory.number = memory_number
             chirp_memory = RadijatorMemory.to_chirp_memory(memory)
             if verbose:
-                print(chirp_memory)
+                log_fn(str(chirp_memory))
             self.radio.set_memory(chirp_memory)
+            if progress_fn:
+                progress_fn(memory_number, total, "Writing memories")
 
 
 RADIO_MODEL_ID_CLASS_DICT = {}
@@ -316,37 +329,40 @@ class RadijatorRT900BT(RadijatorRadio):
 # ============================================================================
 
 
-def handle_program_command(args):
-    """Handle the 'program' subcommand with its nested subcommands."""
-    # validate arguments
-    if (
-        args.program_command in ["load-profile", "load-profile-and-memory"]
-        and not args.profile
-    ):
-        raise ValueError(
-            "The --profile argument is required for the load-profile command."
-        )
-    if (
-        args.program_command in ["load-memory", "load-profile-and-memory"]
-        and not args.memory
-    ):
-        raise ValueError(
-            "The --memory argument is required for the load-memory command."
-        )
+def run_program(
+    radio_model: str,
+    port: str,
+    mode: str,
+    profile: str = None,
+    memory_paths: Iterable[str] = None,
+    verbose: bool = False,
+    log_fn=print,
+    progress_fn=None,
+):
+    """Core program workflow, usable by CLI and GUI.
 
-    # initialize radio class
-    radio: RadijatorRadio = RADIO_MODEL_ID_CLASS_DICT[args.radio_model](args.port)
+    mode: one of "print-settings", "load-profile", "load-memory",
+          "load-profile-and-memory".
+    """
+    if mode in ["load-profile", "load-profile-and-memory"] and not profile:
+        raise ValueError("profile is required for load-profile / load-profile-and-memory")
+    if mode in ["load-memory", "load-profile-and-memory"] and not memory_paths:
+        raise ValueError("memory_paths is required for load-memory / load-profile-and-memory")
 
-    # download firmware and settings
-    radio.download_fw(wait_for_reset=args.program_command != "print-settings")
+    radio: RadijatorRadio = RADIO_MODEL_ID_CLASS_DICT[radio_model](port)
 
-    if args.program_command in ["load-profile", "load-profile-and-memory"]:
-        radio.set_settings_profile(args.profile, args.verbose)
-    if args.program_command == "print-settings":
-        radio.print_settings()
-    if args.program_command in ["load-memory", "load-profile-and-memory"]:
+    if progress_fn:
+        progress_fn(0, 1, "Downloading from radio")
+    log_fn("Downloading settings from radio...")
+    radio.download_fw(wait_for_reset=mode != "print-settings", log_fn=log_fn)
+
+    if mode in ["load-profile", "load-profile-and-memory"]:
+        radio.set_settings_profile(profile, verbose, log_fn=log_fn)
+    if mode == "print-settings":
+        radio.print_settings(log_fn=log_fn)
+    if mode in ["load-memory", "load-profile-and-memory"]:
         memories = []
-        for memory_file in args.memory:
+        for memory_file in memory_paths:
             with open(memory_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 for mem_data in data:
@@ -354,10 +370,26 @@ def handle_program_command(args):
                         RadijatorMemory.from_json(mem_data, radio.DEFAULT_POWER_LEVEL)
                     )
 
-        radio.set_memories(memories, args.verbose)
+        radio.set_memories(memories, verbose, log_fn=log_fn, progress_fn=progress_fn)
 
-    if args.program_command != "print-settings":
+    if mode != "print-settings":
+        if progress_fn:
+            progress_fn(1, 1, "Uploading to radio")
+        log_fn("Uploading to radio...")
         radio.upload_fw()
+        log_fn("Done.")
+
+
+def handle_program_command(args):
+    """Handle the 'program' subcommand with its nested subcommands."""
+    run_program(
+        radio_model=args.radio_model,
+        port=args.port,
+        mode=args.program_command,
+        profile=getattr(args, "profile", None),
+        memory_paths=getattr(args, "memory", None),
+        verbose=args.verbose,
+    )
 
 
 # ============================================================================
@@ -395,24 +427,29 @@ def _to_chirp_format(memories):
     return chirp_memories
 
 
-def handle_convert_command(args):
-    """Handle the 'convert' subcommand."""
-    if not args.input:
+def run_convert(input_path: str, output_path: str, log_fn=print):
+    """Core convert workflow, usable by CLI and GUI."""
+    if not input_path:
         raise ValueError("Input file path is required.")
-    if not args.output:
+    if not output_path:
         raise ValueError("Output file path is required.")
 
-    with open(args.input, "r", encoding="utf-8") as infile:
+    with open(input_path, "r", encoding="utf-8") as infile:
         memories = json.load(infile)
 
-    with open(args.output, "w", newline="", encoding="utf-8") as csvfile:
+    with open(output_path, "w", newline="", encoding="utf-8") as csvfile:
         chirp_memories = _to_chirp_format(memories)
         writer = csv.DictWriter(csvfile, fieldnames=chirp_memories[0].keys())
         writer.writeheader()
         for memory in chirp_memories:
             writer.writerow(memory)
 
-    print(f"Converted {len(memories)} memories from {args.input} to {args.output}")
+    log_fn(f"Converted {len(memories)} memories from {input_path} to {output_path}")
+
+
+def handle_convert_command(args):
+    """Handle the 'convert' subcommand."""
+    run_convert(args.input, args.output)
 
 
 # ============================================================================

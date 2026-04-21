@@ -31,6 +31,19 @@ Radio is selected with `-R <id>`. Currently registered:
 
 Unregistered/WIP in source: `uv9r`, `k5plus` (driver present but `@register_radio` not applied — see TODOs in [radijator.py](radijator.py)).
 
+## GUI
+
+PySide6 GUI wrapping the `program` and `convert` commands. Tabbed UI with a shared log console and progress bar; long serial operations run on a background thread.
+
+```sh
+pip install -r requirements.txt
+python radijator_gui.py
+```
+
+Program tab: radio model dropdown, serial port dropdown (auto-listed from pyserial with Refresh), operation selector (print-settings / load-profile / load-memory / load-profile-and-memory), profile picker, memory list (multi-file, ordered), verbose checkbox. Convert tab: input JSON + output CSV pickers.
+
+On Windows, serial ports appear as `COM3`, `COM4`, …; on Linux typically `/dev/ttyUSB0`.
+
 ## Commands
 
 ```
@@ -149,6 +162,18 @@ export PYTHONPATH="$PYTHONPATH:$BASE_DIRECTORY/chirp:/usr/lib64/python3.14/site-
 python $BASE_DIRECTORY/radijator/radijator.py $@
 deactivate
 ```
+
+## Building standalone binaries
+
+PyInstaller spec produces both `radijator` (CLI, console) and `radijator-gui` (windowed) in `dist/`:
+
+```sh
+pip install -r requirements.txt pyinstaller
+pyinstaller radijator.spec
+ls dist/   # radijator, radijator-gui
+```
+
+Run `pyinstaller` inside the same venv that has CHIRP's deps installed (see Setting up) so `chirp/chirp` is resolvable. On Windows, the commands are identical; the outputs are `radijator.exe` and `radijator-gui.exe`.
 
 ## License
 

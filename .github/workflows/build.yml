@@ -17,11 +17,13 @@ jobs:
           - os: ubuntu-latest
             pretty-name: Linux
             artifact-name: radijator-linux
-            executable-path: dist/radijator
+            cli-path: dist/radijator
+            gui-path: dist/radijator-gui
           - os: windows-latest
             pretty-name: Windows
             artifact-name: radijator-windows
-            executable-path: dist/radijator.exe
+            cli-path: dist/radijator.exe
+            gui-path: dist/radijator-gui.exe
 
     steps:
     - name: Checkout repository
@@ -43,6 +45,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install pyinstaller
+        pip install -r requirements.txt
         grep -v wxPython ./chirp/requirements.txt | pip install -r /dev/stdin
         pip install -e ./chirp
 
@@ -51,6 +54,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install pyinstaller
+        pip install -r requirements.txt
         pip install -r ./chirp/requirements.txt
         pip install -e ./chirp
 
@@ -62,5 +66,7 @@ jobs:
       uses: actions/upload-artifact@v6
       with:
         name: ${{ matrix.artifact-name }}
-        path: ${{ matrix.executable-path }}
+        path: |
+          ${{ matrix.cli-path }}
+          ${{ matrix.gui-path }}
         retention-days: 30

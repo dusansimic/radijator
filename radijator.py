@@ -631,5 +631,24 @@ def main():
         handle_random_dcs_command(args)
 
 
+def _log_crash(exc, name: str):
+    import os
+    import sys
+    import tempfile
+    import traceback
+
+    path = os.path.join(tempfile.gettempdir(), f"{name}-crash.log")
+    try:
+        with open(path, "w") as f:
+            traceback.print_exception(type(exc), exc, exc.__traceback__, file=f)
+        sys.stderr.write(f"Crash log written to {path}\n")
+    except Exception:
+        traceback.print_exc()
+
+
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except BaseException as e:
+        _log_crash(e, "radijator")
+        raise

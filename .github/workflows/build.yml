@@ -33,7 +33,7 @@ jobs:
       uses: actions/checkout@v6
       with:
         repository: kk7ds/chirp
-        path: chirp
+        path: chirp-src
 
     - name: Set up Python
       uses: actions/setup-python@v6
@@ -46,8 +46,8 @@ jobs:
         python -m pip install --upgrade pip
         pip install pyinstaller
         pip install -r requirements.txt
-        grep -v wxPython ./chirp/requirements.txt | pip install -r /dev/stdin
-        pip install -e ./chirp
+        grep -v wxPython ./chirp-src/requirements.txt | pip install -r /dev/stdin
+        pip install -e ./chirp-src
 
     - name: Install dependencies (Windows)
       if: runner.os == 'Windows'
@@ -55,8 +55,8 @@ jobs:
         python -m pip install --upgrade pip
         pip install pyinstaller
         pip install -r requirements.txt
-        pip install -r ./chirp/requirements.txt
-        pip install -e ./chirp
+        pip install -r ./chirp-src/requirements.txt
+        pip install -e ./chirp-src
 
     - name: Build with PyInstaller
       run: |

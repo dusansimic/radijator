@@ -69,6 +69,18 @@ class ProgramTab(QWidget):
         pb.addLayout(profile_row)
         self.profile_box = profile_box
 
+        self.msg_line1_edit = QLineEdit()
+        self.msg_line1_edit.setPlaceholderText("Message line 1")
+        self.msg_line2_edit = QLineEdit()
+        self.msg_line2_edit.setPlaceholderText("Message line 2")
+        msg_form = QFormLayout()
+        msg_form.addRow("Line 1:", self.msg_line1_edit)
+        msg_form.addRow("Line 2:", self.msg_line2_edit)
+        self.msg_override_box = QGroupBox("Power-on message override")
+        mob = QVBoxLayout(self.msg_override_box)
+        mob.addLayout(msg_form)
+        self.msg_override_box.setVisible(False)
+
         self.memory_list = QListWidget()
         mem_add = QPushButton("Add...")
         mem_remove = QPushButton("Remove")
@@ -90,6 +102,7 @@ class ProgramTab(QWidget):
         layout = QVBoxLayout(self)
         layout.addLayout(form)
         layout.addWidget(profile_box)
+        layout.addWidget(self.msg_override_box)
         layout.addWidget(memory_box)
         layout.addWidget(self.run_btn)
         layout.addStretch(1)
@@ -131,6 +144,12 @@ class ProgramTab(QWidget):
         return [self.memory_list.item(i).text() for i in range(self.memory_list.count())]
 
     def _emit_run(self):
+        overrides = None
+        if self.msg_override_box.isVisible():
+            overrides = {
+                "Message Line 1": self.msg_line1_edit.text(),
+                "Message Line 2": self.msg_line2_edit.text(),
+            }
         self.run_requested.emit(
             {
                 "radio_model": self.model_combo.currentText(),
@@ -139,8 +158,12 @@ class ProgramTab(QWidget):
                 "profile": self.profile_edit.text() or None,
                 "memory_paths": self._memory_paths() or None,
                 "verbose": self.verbose_check.isChecked(),
+                "profile_overrides": overrides,
             }
         )
+
+    def set_message_override_visible(self, visible: bool):
+        self.msg_override_box.setVisible(visible)
 
     def set_running(self, running: bool):
         self.run_btn.setEnabled(not running)

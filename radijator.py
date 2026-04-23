@@ -186,8 +186,20 @@ class RadijatorRadio:
 
         return _profile
 
-    def set_settings_profile(self, profile_file_name: str, verbose: bool, log_fn=print):
+    def set_settings_profile(
+        self,
+        profile_file_name: str,
+        verbose: bool,
+        log_fn=print,
+        profile_overrides: dict = None,
+    ):
         profile = self._transpose_settings_profile(profile_file_name)
+
+        if profile_overrides:
+            for entry in profile.values():
+                pretty = entry["pretty_name"]
+                if pretty in profile_overrides:
+                    entry["value"] = profile_overrides[pretty]
 
         settings = self._settings
 
@@ -345,6 +357,7 @@ def run_program(
     verbose: bool = False,
     log_fn=print,
     progress_fn=None,
+    profile_overrides: dict = None,
 ):
     """Core program workflow, usable by CLI and GUI.
 
@@ -364,7 +377,12 @@ def run_program(
     radio.download_fw(wait_for_reset=mode != "print-settings", log_fn=log_fn)
 
     if mode in ["load-profile", "load-profile-and-memory"]:
-        radio.set_settings_profile(profile, verbose, log_fn=log_fn)
+        radio.set_settings_profile(
+            profile,
+            verbose,
+            log_fn=log_fn,
+            profile_overrides=profile_overrides,
+        )
     if mode == "print-settings":
         radio.print_settings(log_fn=log_fn)
     if mode in ["load-memory", "load-profile-and-memory"]:

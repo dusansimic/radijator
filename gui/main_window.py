@@ -65,6 +65,14 @@ class MainWindow(QMainWindow):
         quit_action.triggered.connect(self.close)
         file_menu.addAction(quit_action)
 
+        options_menu = self.menuBar().addMenu("&Options")
+        msg_override_action = QAction("Override power-on &message", self)
+        msg_override_action.setCheckable(True)
+        msg_override_action.toggled.connect(
+            self.program_tab.set_message_override_visible
+        )
+        options_menu.addAction(msg_override_action)
+
         help_menu = self.menuBar().addMenu("&Help")
         about_action = QAction("&About", self)
         about_action.triggered.connect(self._show_about)

@@ -35,4 +35,4 @@ jobs:
       with:
         name: radijator-user-manual
         path: user-manual/radijator-manual.pdf
-        retention-days: 30
+        retention-days: 1

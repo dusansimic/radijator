@@ -69,4 +69,4 @@ jobs:
         path: |
           ${{ matrix.cli-path }}
           ${{ matrix.gui-path }}
-        retention-days: 30
+        retention-days: 1

@@ -74,9 +74,14 @@ class MainWindow(QMainWindow):
         QMessageBox.about(
             self,
             "About Radijator",
-            f"Radijator {radijator.__version__}\n\n"
-            "Cross-platform GUI for flashing memories and settings\n"
-            "to Baofeng / Radtel radios via CHIRP drivers.",
+            f"<h3>Radijator {radijator.__version__}</h3>"
+            "<p>Cross-platform GUI for flashing memories and settings "
+            "to Baofeng / Radtel radios via CHIRP drivers.</p>"
+            "<p><b>Author:</b> Dušan Simić</p>"
+            "<p><b>License:</b> BSD 2-Clause</p>"
+            "<p><b>Repository:</b> "
+            '<a href="https://github.com/dusansimic/radijator">'
+            "github.com/dusansimic/radijator</a></p>",
         )
 
     def _append_log(self, text: str):

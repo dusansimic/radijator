@@ -31,7 +31,31 @@ radijator program -R <model> -p <port> [--verbose] <mode> [mode-args]
     `COMx` name.],
   [`--verbose`],
     [Log every individual setting write or memory line. Off by default.],
+  [`--dtmf-code`],
+    [DTMF code for this radio. Must match `*ddd#` (asterisk, three
+    digits, hash). Coupled with `--dtmf-nickname` and `--dtmf-csv` —
+    pass all three or none.],
+  [`--dtmf-nickname`],
+    [Human-readable label written alongside the DTMF code. Coupled
+    with `--dtmf-code` and `--dtmf-csv`.],
+  [`--dtmf-csv`],
+    [Path to the DTMF log CSV. Created on first use; the
+    `code,nickname` header is written automatically. Subsequent runs
+    append one row each. Coupled with `--dtmf-code` and
+    `--dtmf-nickname`.],
 )
+
+A combined example flashing memories and logging the DTMF code:
+
+```sh
+radijator program -R uv5r -p /dev/ttyUSB0 \
+  --dtmf-code "*042#" --dtmf-nickname "alice" \
+  --dtmf-csv dtmf.csv \
+  load-memory -M memories/pmr.json
+```
+
+The row `*042#,alice` is appended to `dtmf.csv` only if the flash
+succeeds.
 
 === Mode: `print-settings`
 

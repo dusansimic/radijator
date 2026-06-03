@@ -3,7 +3,9 @@
 import argparse
 import json
 import csv
+import os
 import random
+import re
 import time
 from typing import Iterable
 
@@ -13,8 +15,14 @@ from chirp.drivers.baofeng_wp970i import UV9R
 from chirp.drivers.baofeng_uv17Pro import UV25, BFK5Plus
 from chirp.drivers.mml_jc8810 import RT470XRadio, RT470Radio
 from chirp.drivers.radtel_rt900 import RT900BT
+from chirp.drivers.uv5r import PTTID_LIST as UV5R_PTTID_LIST
 from chirp.chirp_common import Memory, PowerLevel, Radio, DTCS_CODES as DCS_CODES
-from chirp.settings import RadioSettings
+from chirp.settings import (
+    RadioSetting,
+    RadioSettingGroup,
+    RadioSettings,
+    RadioSettingValueList,
+)
 
 # chirp.wxui.serialtrace hijacks sys.stdout/sys.stderr at import time,
 # routing them into ~/.chirp/debug.log. Save and restore around the import.
@@ -36,12 +44,17 @@ class RadijatorMemory:
     name: str = None
     freq: int = None
     power_level: PowerLevel = None
-    tone: str = None  # valid values: "", "DTCS"
+    tone: str = None  # CHIRP tmode: "", "Tone", "TSQL", "DTCS", "DTCS-R", "TSQL-R", "Cross"
     rdcs_code: int = None
     tdcs_code: int = None
     dcs_polarity: int = None
     mode: str = None
     tuning_step: float = None
+    duplex: str = None
+    offset: int = None
+    rtone: float = None
+    ctone: float = None
+    ptt_id: bool = None
 
     def __init__(
         self,
@@ -55,6 +68,11 @@ class RadijatorMemory:
         dcs_polarity: str = "NN",
         mode: str = "NFM",
         tuning_step: float = 5.0,
+        duplex: str = "",
+        offset: int = 0,
+        rtone: float = 88.5,
+        ctone: float = 88.5,
+        ptt_id: bool = False,
     ):
         self.number = number
         self.name = name
@@ -66,6 +84,11 @@ class RadijatorMemory:
         self.dcs_polarity = dcs_polarity
         self.mode = mode
         self.tuning_step = tuning_step
+        self.duplex = duplex
+        self.offset = offset
+        self.rtone = rtone
+        self.ctone = ctone
+        self.ptt_id = ptt_id
 
     def __str__(self):
         return f"Mem#{self.number} {self.name} Freq:{self.freq} Power:{self.power_level} RDCS:{self.rdcs_code} TDCS:{self.tdcs_code} DCS Polarity:{self.dcs_polarity}"
@@ -77,11 +100,16 @@ class RadijatorMemory:
             name=mem.name,
             freq=mem.freq,
             power_level=mem.power,
+            tone=mem.tmode,
             rdcs_code=mem.rx_dtcs,
             tdcs_code=mem.dtcs,
             dcs_polarity=mem.dtcs_polarity,
             mode=mem.mode,
             tuning_step=mem.tuning_step,
+            duplex=mem.duplex,
+            offset=mem.offset,
+            rtone=mem.rtone,
+            ctone=mem.ctone,
         )
 
     @staticmethod
@@ -92,19 +120,20 @@ class RadijatorMemory:
         mem.freq = rad_mem.freq
         mem.power = rad_mem.power_level
         mem.tmode = rad_mem.tone
+        mem.rtone = rad_mem.rtone
+        mem.ctone = rad_mem.ctone
         mem.rx_dtcs = rad_mem.rdcs_code
         mem.dtcs = rad_mem.tdcs_code
         mem.dtcs_polarity = rad_mem.dcs_polarity
         mem.mode = rad_mem.mode
         mem.tuning_step = rad_mem.tuning_step
-        mem.duplex = ""
-        mem.offset = 0
+        mem.duplex = rad_mem.duplex
+        mem.offset = rad_mem.offset
         mem.empty = False
         return mem
 
     @staticmethod
     def from_json(data: dict, power_level: PowerLevel) -> "RadijatorMemory":
-        # TODO: Copilot generated, verify correctness
         return RadijatorMemory(
             number=data.get("number", None),
             name=data["name"],
@@ -116,6 +145,11 @@ class RadijatorMemory:
             dcs_polarity=data.get("dcs_polarity", "NN"),
             mode=data.get("mode", "NFM"),
             tuning_step=data.get("tuning_step", 5.0),
+            duplex=data.get("duplex", ""),
+            offset=data.get("offset", 0),
+            rtone=data.get("rtone", 88.5),
+            ctone=data.get("ctone", 88.5),
+            ptt_id=data.get("ptt_id", False),
         )
 
 
@@ -248,11 +282,57 @@ class RadijatorRadio:
         for memory_number, memory in enumerate(memories, start=1):
             memory.number = memory_number
             chirp_memory = RadijatorMemory.to_chirp_memory(memory)
+            self._apply_memory_extras(chirp_memory, memory)
             if verbose:
                 log_fn(str(chirp_memory))
             self.radio.set_memory(chirp_memory)
             if progress_fn:
                 progress_fn(memory_number, total, "Writing memories")
+
+    def _apply_memory_extras(self, chirp_mem: Memory, rad_mem: RadijatorMemory):
+        """Subclass hook to attach driver-specific Memory.extra entries
+        (e.g. PTT-ID, BCL). Default: no-op."""
+        pass
+
+    def set_dtmf_code(self, code: str, log_fn=print):
+        log_fn(
+            f"set_dtmf_code not implemented for {self.__class__.__name__}; "
+            f"requested code: {code}"
+        )
+
+    def set_power_on_message(self, line1: str, line2: str, log_fn=print):
+        log_fn(
+            f"set_power_on_message not implemented for "
+            f"{self.__class__.__name__}; lines: {line1!r}, {line2!r}"
+        )
+
+
+DTMF_CODE_RE = re.compile(r"^\*\d{3}#$")
+
+
+def _validate_dtmf_code(value: str) -> str:
+    if not DTMF_CODE_RE.match(value):
+        raise argparse.ArgumentTypeError(
+            f"DTMF code must match *ddd# (got {value!r})"
+        )
+    return value
+
+
+def _append_dtmf_row(csv_path: str, code: str, nickname: str, log_fn=print):
+    fresh = not os.path.exists(csv_path) or os.path.getsize(csv_path) == 0
+    with open(csv_path, "a", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        if fresh:
+            writer.writerow(["code", "nickname"])
+        writer.writerow([code, nickname])
+    log_fn(f"Logged DTMF {code} ({nickname}) to {csv_path}")
+
+
+def _next_dtmf_code(code: str) -> str:
+    if not DTMF_CODE_RE.match(code):
+        raise ValueError(f"bad DTMF code: {code!r}")
+    n = (int(code[1:4]) + 1) % 1000
+    return f"*{n:03d}#"
 
 
 RADIO_MODEL_ID_CLASS_DICT = {}
@@ -275,6 +355,63 @@ class RadijatorUV5R(RadijatorRadio):
     DRIVER_CLASS = BaofengUV5R
     RADIJATOR_SETTINGS_PROFILE_ID = "uv5r"
     RESET_TIME = 6
+    DTMF_SETTING_NAME = "pttid/0.code"
+    POWERON_MSG_WIDTH = 7
+
+    def set_dtmf_code(self, code: str, log_fn=print):
+        if self._settings is None:
+            raise RuntimeError("download settings before setting DTMF code")
+        target = None
+        for setting in self._settings.walk():
+            if setting.get_name() == self.DTMF_SETTING_NAME:
+                target = setting
+                break
+        if target is None:
+            raise RuntimeError(
+                f"DTMF setting {self.DTMF_SETTING_NAME!r} not found in radio settings"
+            )
+        target.__setitem__(0, code)
+        log_fn(f"DTMF slot 1 set to {code}")
+        self.radio.set_settings(self._settings)
+        self._settings = self.radio.get_settings()
+
+    def _apply_memory_extras(self, chirp_mem: Memory, rad_mem: RadijatorMemory):
+        if not rad_mem.ptt_id:
+            return
+        chirp_mem.extra = RadioSettingGroup("Extra", "extra")
+        chirp_mem.extra.append(
+            RadioSetting(
+                "pttid",
+                "PTT ID",
+                RadioSettingValueList(
+                    UV5R_PTTID_LIST,
+                    current_index=UV5R_PTTID_LIST.index("BOT"),
+                ),
+            )
+        )
+
+    def set_power_on_message(self, line1: str, line2: str, log_fn=print):
+        if self._settings is None:
+            raise RuntimeError("download settings before setting power-on message")
+        targets = {
+            "poweron_msg.line1": line1,
+            "poweron_msg.line2": line2,
+            "ponmsg": "Message",
+        }
+        found = set()
+        for setting in self._settings.walk():
+            name = setting.get_name()
+            if name in targets:
+                setting.__setitem__(0, targets[name])
+                found.add(name)
+        missing = set(targets) - found
+        if missing:
+            raise RuntimeError(
+                f"power-on message settings not found in radio settings: {missing}"
+            )
+        log_fn(f"Power-on message: {line1!r} / {line2!r}")
+        self.radio.set_settings(self._settings)
+        self._settings = self.radio.get_settings()
 
 
 # TODO: Add to profile
@@ -358,6 +495,9 @@ def run_program(
     log_fn=print,
     progress_fn=None,
     profile_overrides: dict = None,
+    dtmf_code: str = None,
+    dtmf_nickname: str = None,
+    dtmf_csv: str = None,
 ):
     """Core program workflow, usable by CLI and GUI.
 
@@ -368,6 +508,14 @@ def run_program(
         raise ValueError("profile is required for load-profile / load-profile-and-memory")
     if mode in ["load-memory", "load-profile-and-memory"] and not memory_paths:
         raise ValueError("memory_paths is required for load-memory / load-profile-and-memory")
+
+    dtmf_active = any((dtmf_code, dtmf_nickname, dtmf_csv))
+    if dtmf_active and not all((dtmf_code, dtmf_nickname, dtmf_csv)):
+        raise ValueError(
+            "dtmf_code, dtmf_nickname and dtmf_csv must all be set together"
+        )
+    if dtmf_code is not None and not DTMF_CODE_RE.match(dtmf_code):
+        raise ValueError(f"DTMF code must match *ddd# (got {dtmf_code!r})")
 
     radio: RadijatorRadio = RADIO_MODEL_ID_CLASS_DICT[radio_model](port)
 
@@ -398,11 +546,22 @@ def run_program(
         radio.set_memories(memories, verbose, log_fn=log_fn, progress_fn=progress_fn)
 
     if mode != "print-settings":
+        if dtmf_code:
+            radio.set_dtmf_code(dtmf_code, log_fn=log_fn)
+            width = getattr(radio, "POWERON_MSG_WIDTH", 7)
+            line1 = (dtmf_nickname or "")[:width].center(width)
+            digits = "".join(c for c in dtmf_code if c.isdigit())
+            line2 = digits[:width].center(width)
+            radio.set_power_on_message(line1, line2, log_fn=log_fn)
+
         if progress_fn:
             progress_fn(1, 1, "Uploading to radio")
         log_fn("Uploading to radio...")
         radio.upload_fw()
         log_fn("Done.")
+
+        if dtmf_active:
+            _append_dtmf_row(dtmf_csv, dtmf_code, dtmf_nickname, log_fn=log_fn)
 
 
 def handle_program_command(args):
@@ -414,6 +573,9 @@ def handle_program_command(args):
         profile=getattr(args, "profile", None),
         memory_paths=getattr(args, "memory", None),
         verbose=args.verbose,
+        dtmf_code=getattr(args, "dtmf_code", None),
+        dtmf_nickname=getattr(args, "dtmf_nickname", None),
+        dtmf_csv=getattr(args, "dtmf_csv", None),
     )
 
 
@@ -432,8 +594,8 @@ def _to_chirp_format(memories):
             "Duplex": memory.get("duplex", ""),
             "Offset": memory.get("offset", 5000000) / 1e6,
             "Tone": memory.get("tone", ""),
-            "rToneFreq": memory.get("rToneFreq", 88.5),
-            "cToneFreq": memory.get("cToneFreq", 88.5),
+            "rToneFreq": memory.get("rtone", 88.5),
+            "cToneFreq": memory.get("ctone", 88.5),
             "DtcsCode": memory.get("tdcs_code", "023"),
             "DtcsPolarity": memory.get("dcs_polarity", "NN"),
             "RxDtcsCode": memory.get("rdcs_code", "023"),
@@ -554,6 +716,22 @@ def main():
         action="store_true",
         help="Enable verbose output.",
     )
+    program_parser.add_argument(
+        "--dtmf-code",
+        type=_validate_dtmf_code,
+        help="DTMF code for this radio in *ddd# format (e.g. *042#). "
+        "Requires --dtmf-nickname and --dtmf-csv.",
+    )
+    program_parser.add_argument(
+        "--dtmf-nickname",
+        help="Human-readable label for this DTMF code. "
+        "Requires --dtmf-code and --dtmf-csv.",
+    )
+    program_parser.add_argument(
+        "--dtmf-csv",
+        help="Path to the DTMF log CSV (created if missing). "
+        "Requires --dtmf-code and --dtmf-nickname.",
+    )
 
     # Create nested subparsers for program commands
     program_subparsers = program_parser.add_subparsers(
@@ -649,6 +827,15 @@ def main():
     args = parser.parse_args()
 
     if args.command == "program":
+        dtmf_args = (
+            getattr(args, "dtmf_code", None),
+            getattr(args, "dtmf_nickname", None),
+            getattr(args, "dtmf_csv", None),
+        )
+        if any(dtmf_args) and not all(dtmf_args):
+            parser.error(
+                "--dtmf-code, --dtmf-nickname and --dtmf-csv must be used together"
+            )
         handle_program_command(args)
     elif args.command == "convert":
         handle_convert_command(args)

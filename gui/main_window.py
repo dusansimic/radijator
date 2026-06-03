@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QAction
+from PySide6.QtGui import QAction, QActionGroup
 from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
 import radijator
 
 from .convert_tab import ConvertTab
+from .dtmf_tab import DtmfTab
 from .program_tab import ProgramTab
 from .worker import Worker
 
@@ -26,12 +27,13 @@ class MainWindow(QMainWindow):
 
         self.program_tab = ProgramTab()
         self.convert_tab = ConvertTab()
+        self.dtmf_tab = DtmfTab()
         self.program_tab.run_requested.connect(self._run_program)
         self.convert_tab.run_requested.connect(self._run_convert)
 
-        tabs = QTabWidget()
-        tabs.addTab(self.program_tab, "Program")
-        tabs.addTab(self.convert_tab, "Convert")
+        self.tabs = QTabWidget()
+        self.tabs.addTab(self.program_tab, "Program")
+        self.tabs.addTab(self.convert_tab, "Convert")
 
         self.log_view = QPlainTextEdit()
         self.log_view.setReadOnly(True)
@@ -49,7 +51,7 @@ class MainWindow(QMainWindow):
         bl.addWidget(self.progress_bar)
 
         splitter = QSplitter(Qt.Vertical)
-        splitter.addWidget(tabs)
+        splitter.addWidget(self.tabs)
         splitter.addWidget(bottom)
         splitter.setStretchFactor(0, 0)
         splitter.setStretchFactor(1, 1)
@@ -66,12 +68,22 @@ class MainWindow(QMainWindow):
         file_menu.addAction(quit_action)
 
         options_menu = self.menuBar().addMenu("&Options")
-        msg_override_action = QAction("Override power-on &message", self)
-        msg_override_action.setCheckable(True)
-        msg_override_action.toggled.connect(
+        self.msg_override_action = QAction("Override power-on &message", self)
+        self.msg_override_action.setCheckable(True)
+        self.msg_override_action.toggled.connect(
             self.program_tab.set_message_override_visible
         )
-        options_menu.addAction(msg_override_action)
+        options_menu.addAction(self.msg_override_action)
+
+        self.dtmf_action = QAction("Configure &DTMF code", self)
+        self.dtmf_action.setCheckable(True)
+        self.dtmf_action.toggled.connect(self._toggle_dtmf_tab)
+        options_menu.addAction(self.dtmf_action)
+
+        opts_group = QActionGroup(self)
+        opts_group.setExclusionPolicy(QActionGroup.ExclusionPolicy.ExclusiveOptional)
+        opts_group.addAction(self.msg_override_action)
+        opts_group.addAction(self.dtmf_action)
 
         help_menu = self.menuBar().addMenu("&Help")
         about_action = QAction("&About", self)
@@ -103,6 +115,19 @@ class MainWindow(QMainWindow):
             self.progress_bar.setValue(step)
         self.progress_bar.setFormat(f"{label} ({step}/{total})" if total else label)
 
+    def _toggle_dtmf_tab(self, checked: bool):
+        idx = self.tabs.indexOf(self.dtmf_tab)
+        if checked and idx == -1:
+            self.tabs.addTab(self.dtmf_tab, "DTMF")
+        elif not checked and idx != -1:
+            self.tabs.removeTab(idx)
+        self.program_tab.set_dtmf_visible(checked)
+        if checked and not self.program_tab.dtmf_code():
+            last = self.dtmf_tab.last_code()
+            self.program_tab.set_dtmf_code(
+                radijator._next_dtmf_code(last) if last else "*001#"
+            )
+
     def _start_worker(self, target, kwargs, with_progress: bool):
         if self._worker and self._worker.isRunning():
             return
@@ -111,6 +136,7 @@ class MainWindow(QMainWindow):
         self.progress_bar.setFormat("Running...")
         self.program_tab.set_running(True)
         self.convert_tab.set_running(True)
+        self.dtmf_tab.set_running(True)
 
         self._worker = Worker(target, kwargs, with_progress=with_progress)
         self._worker.log.connect(self._append_log)
@@ -125,8 +151,38 @@ class MainWindow(QMainWindow):
         self.progress_bar.setFormat("Done" if ok else "Failed")
         self.program_tab.set_running(False)
         self.convert_tab.set_running(False)
+        self.dtmf_tab.set_running(False)
+        if ok and self.dtmf_action.isChecked():
+            self.dtmf_tab.refresh_table()
+            last = self.dtmf_tab.last_code()
+            if last:
+                self.program_tab.set_dtmf_code(radijator._next_dtmf_code(last))
+            self.program_tab.clear_dtmf_nickname()
 
     def _run_program(self, kwargs: dict):
+        if self.dtmf_action.isChecked():
+            csv_path = self.dtmf_tab.csv_path()
+            code = self.program_tab.dtmf_code()
+            nickname = self.program_tab.dtmf_nickname()
+            if not csv_path or not code or not nickname:
+                QMessageBox.warning(
+                    self,
+                    "Missing input",
+                    "DTMF requires a CSV file (DTMF tab), a valid *ddd# code "
+                    "and a nickname.",
+                )
+                return
+            if not radijator.DTMF_CODE_RE.match(code):
+                QMessageBox.warning(
+                    self, "Missing input", "DTMF code must match *ddd#."
+                )
+                return
+            kwargs = {
+                **kwargs,
+                "dtmf_csv": csv_path,
+                "dtmf_code": code,
+                "dtmf_nickname": nickname,
+            }
         missing = self._validate_program(kwargs)
         if missing:
             QMessageBox.warning(self, "Missing input", missing)

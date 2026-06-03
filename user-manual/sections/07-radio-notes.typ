@@ -49,6 +49,23 @@ Rock-solid. The UV-5R family is what Radijator was built against. A
 reset wait of 6 s between download and upload is baked into the
 driver class; this matches the BL-5 bootloader timing.
 
+DTMF specifics:
+
+- The UV-5R holds 15 DTMF code slots (DTMF1–DTMF15). Radijator writes
+  the per-radio code from `--dtmf-code` (CLI) / *DTMF code* field (GUI)
+  into *slot 1* only. The other 14 slots are left untouched.
+- Memory channels with `ptt_id: true` get their PTT-ID set to `BOT`
+  (Beginning Of Transmission) and their PTT-ID code selector pointed at
+  slot 1, so they transmit the code as the carrier rises.
+- When a DTMF code is supplied, Radijator also overwrites the
+  power-on message: line 1 is the DTMF nickname, line 2 is the
+  digits-only part of the code (`*042#` → `042`). Both lines are
+  centered in the 7-character display field and `ponmsg` is set to
+  `Message` so the radio actually shows the text. Nicknames longer
+  than 7 characters are truncated; this overrides any value coming
+  from `settings_profile.json` or the GUI's *Override power-on
+  message* checkbox.
+
 === Baofeng UV-6R
 
 Works with the same handshake as the UV-5R. Driver is registered but

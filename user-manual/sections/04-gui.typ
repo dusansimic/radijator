@@ -41,6 +41,13 @@ pane more room.
 === Menus
 
 - *File → Quit* — closes the window.
+- *Options* — two mutually-exclusive checkable entries (at most one can
+  be active; both can be off):
+  - *Override power-on message* — reveals two extra text fields in the
+    *Program* tab that replace the `Message Line 1` / `Message Line 2`
+    entries of the settings profile at write time.
+  - *Configure DTMF code* — reveals a new *DTMF* tab for per-radio
+    DTMF-code logging. See *DTMF tab* below.
 - *Help → About* — version, short description, attribution.
 
 == Program tab
@@ -115,6 +122,22 @@ Enabled only in *Load memory* and *Load profile and memory* modes.
   file's first memory goes into channel 1, and so on. If you add the
   same file twice, its memories appear twice.
 
+=== DTMF code
+
+Visible only when *Options → Configure DTMF code* is checked. Two
+fields:
+
+- *Code* — must match `*ddd#` (asterisk, three digits, hash). The
+  field rejects anything else. Seeded automatically with the next
+  sequential value after the last entry in the selected CSV log; if
+  the CSV is empty or unselected, seeded with `*001#`.
+- *Nickname* — free-text label written alongside the code.
+
+The CSV file these rows append to is selected on the *DTMF* tab. The
+row is appended only after a successful *Run*; the code field auto-
+bumps to the next sequential value (`*041#` → `*042#`, wrapping at
+`*999#` to `*000#`) and the nickname clears.
+
 === Run
 
 Executes the current operation. Disabled during a run. A dialog pops
@@ -137,6 +160,25 @@ Converts a Radijator memory JSON into a CHIRP-compatible CSV.
   memories were converted.
 
 No serial port, no radio needed — this is a pure file transform.
+
+== DTMF tab
+
+Visible only when *Options → Configure DTMF code* is checked. Holds
+the CSV log file picker and the current contents of that log.
+
+- *CSV log file*:
+  - *Open existing...* — pick a CSV the operator already has.
+  - *New...* — pick a path; an empty file is created on confirm. The
+    `code,nickname` header is written automatically on first append.
+- *Existing entries* — read-only table of the rows already in the
+  selected file. Refreshes after every successful run.
+
+The DTMF tab is gated by the *Options* group — toggling *Override
+power-on message* turns this tab off.
+
+The per-radio *Code* and *Nickname* inputs are not in this tab — they
+live in the *Program* tab so the operator can fill them in the same
+place as the other run inputs. See *Program tab → DTMF code* below.
 
 == Interpreting log output and progress
 

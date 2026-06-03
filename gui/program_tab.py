@@ -1,4 +1,5 @@
-from PySide6.QtCore import Signal
+from PySide6.QtCore import QRegularExpression, Signal
+from PySide6.QtGui import QRegularExpressionValidator
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -81,6 +82,21 @@ class ProgramTab(QWidget):
         mob.addLayout(msg_form)
         self.msg_override_box.setVisible(False)
 
+        self.dtmf_code_edit = QLineEdit()
+        self.dtmf_code_edit.setPlaceholderText("*001#")
+        self.dtmf_code_edit.setValidator(
+            QRegularExpressionValidator(QRegularExpression(r"^\*\d{3}#$"))
+        )
+        self.dtmf_nickname_edit = QLineEdit()
+        self.dtmf_nickname_edit.setPlaceholderText("Operator name")
+        dtmf_form = QFormLayout()
+        dtmf_form.addRow("Code:", self.dtmf_code_edit)
+        dtmf_form.addRow("Nickname:", self.dtmf_nickname_edit)
+        self.dtmf_box = QGroupBox("DTMF code")
+        db = QVBoxLayout(self.dtmf_box)
+        db.addLayout(dtmf_form)
+        self.dtmf_box.setVisible(False)
+
         self.memory_list = QListWidget()
         mem_add = QPushButton("Add...")
         mem_remove = QPushButton("Remove")
@@ -103,6 +119,7 @@ class ProgramTab(QWidget):
         layout.addLayout(form)
         layout.addWidget(profile_box)
         layout.addWidget(self.msg_override_box)
+        layout.addWidget(self.dtmf_box)
         layout.addWidget(memory_box)
         layout.addWidget(self.run_btn)
         layout.addStretch(1)
@@ -165,5 +182,22 @@ class ProgramTab(QWidget):
     def set_message_override_visible(self, visible: bool):
         self.msg_override_box.setVisible(visible)
 
+    def set_dtmf_visible(self, visible: bool):
+        self.dtmf_box.setVisible(visible)
+
+    def dtmf_code(self) -> str:
+        return self.dtmf_code_edit.text().strip()
+
+    def dtmf_nickname(self) -> str:
+        return self.dtmf_nickname_edit.text().strip()
+
+    def set_dtmf_code(self, code: str):
+        self.dtmf_code_edit.setText(code)
+
+    def clear_dtmf_nickname(self):
+        self.dtmf_nickname_edit.clear()
+
     def set_running(self, running: bool):
         self.run_btn.setEnabled(not running)
+        self.dtmf_code_edit.setEnabled(not running)
+        self.dtmf_nickname_edit.setEnabled(not running)

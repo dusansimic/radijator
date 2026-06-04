@@ -36,6 +36,7 @@ class ProgramTab(QWidget):
         for model_id in radijator.RADIO_MODEL_ID_CLASS_DICT.keys():
             self.model_combo.addItem(model_id)
 
+        self._filter_usb_only = True
         self.port_combo = QComboBox()
         self.port_combo.setEditable(True)
         self._refresh_ports()
@@ -130,9 +131,15 @@ class ProgramTab(QWidget):
         current = self.port_combo.currentText()
         self.port_combo.clear()
         for p in list_ports.comports():
+            if self._filter_usb_only and not p.device.startswith("/dev/ttyUSB"):
+                continue
             self.port_combo.addItem(p.device)
         if current:
             self.port_combo.setEditText(current)
+
+    def set_port_filter_usb_only(self, usb_only: bool):
+        self._filter_usb_only = usb_only
+        self._refresh_ports()
 
     def _pick_profile(self):
         path, _ = QFileDialog.getOpenFileName(

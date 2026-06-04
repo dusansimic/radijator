@@ -85,6 +85,14 @@ class MainWindow(QMainWindow):
         opts_group.addAction(self.msg_override_action)
         opts_group.addAction(self.dtmf_action)
 
+        options_menu.addSeparator()
+        self.show_all_ports_action = QAction("Show &all serial ports", self)
+        self.show_all_ports_action.setCheckable(True)
+        self.show_all_ports_action.toggled.connect(
+            lambda checked: self.program_tab.set_port_filter_usb_only(not checked)
+        )
+        options_menu.addAction(self.show_all_ports_action)
+
         help_menu = self.menuBar().addMenu("&Help")
         about_action = QAction("&About", self)
         about_action.triggered.connect(self._show_about)

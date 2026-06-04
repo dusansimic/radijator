@@ -41,13 +41,17 @@ pane more room.
 === Menus
 
 - *File → Quit* — closes the window.
-- *Options* — two mutually-exclusive checkable entries (at most one can
-  be active; both can be off):
-  - *Override power-on message* — reveals two extra text fields in the
+- *Options*:
+  - *Override power-on message* and *Configure DTMF code* — two
+    mutually-exclusive checkable entries (at most one can be active;
+    both can be off). The first reveals two extra text fields in the
     *Program* tab that replace the `Message Line 1` / `Message Line 2`
-    entries of the settings profile at write time.
-  - *Configure DTMF code* — reveals a new *DTMF* tab for per-radio
-    DTMF-code logging. See *DTMF tab* below.
+    entries of the settings profile at write time. The second reveals
+    a new *DTMF* tab for per-radio DTMF-code logging; see *DTMF tab*
+    below.
+  - *Show all serial ports* — independent toggle that disables the
+    default `/dev/ttyUSB*` filter on the *Program* tab's serial-port
+    dropdown.
 - *Help → About* — version, short description, attribution.
 
 == Program tab
@@ -75,6 +79,12 @@ directly. *Refresh* re-scans after you plug a cable in.
 
 - Linux: `/dev/ttyUSB0`, `/dev/ttyUSB1`, ...
 - Windows: `COM3`, `COM4`, ...
+
+By default the dropdown is filtered to `/dev/ttyUSB*` devices on
+Linux to hide built-in serial lines and Bluetooth modems. Enable
+*Options → Show all serial ports* to disable the filter and see
+every port the OS reports. Windows users typically want this option
+on, since `COM*` names don't follow the `ttyUSB` pattern.
 
 === Operation
 

@@ -1,183 +1,72 @@
-# radijator
+# Radijator
 
-A simple script for efficient flashing of settings and memory channels to Chinese shitbox mobile radios (e.g. Baofeng), plus helpers for generating random DCS codes and converting the radijator JSON format to CHIRP-compatible CSV.
+Flash inexpensive Chinese handheld radios — Baofeng UV-5R/UV-82/UV-25, Radtel RT-470/RT-900BT and friends — without wrestling CHIRP's GUI for every operator. Drop a memory JSON and a settings profile, hit a button (or run one command), and the radio is ready.
 
-Built on top of [CHIRP](https://chirpmyradio.com/) radio drivers.
+Built on the battle-tested [CHIRP](https://chirpmyradio.com/) driver suite — Radijator is a workflow layer, not a fork.
 
-## Features
+## What you get
 
-- **Program radio over serial** — download firmware/settings from the radio, apply a settings profile and/or memory channels, and upload back.
-- **Settings profiles** — single JSON file declares pretty-named settings once and maps them per radio model (squelch, power save, TOT, VOX, etc.). Reusable across models.
-- **Memory channels** — load channels from one or more JSON files. Multiple `-M` files are concatenated in order.
-- **Existing memories wiped** — before writing, all memory slots in the radio's memory range are cleared so leftover channels don't linger.
-- **Print current settings** — dump every setting currently stored on the radio without mutating it.
-- **JSON → CHIRP CSV conversion** — turn a radijator memory JSON file into a CSV importable by CHIRP.
-- **Random DCS assignment** — batch-assign random DCS codes and polarities (NN/RR) to a memory JSON file, writing a new JSON.
-- **Verbose mode** — log each setting applied and each memory written.
+- **GUI** (PySide6) — pick a model, pick a port, pick your files, click *Run*. Live progress bar driven by [Rich](https://github.com/Textualize/rich). Tabs for programming, converting, and DTMF-code logging.
+- **CLI** — same operations, scriptable. Useful for batches and CI.
+- **Per-radio DTMF tracking** — generate a sequential code for every flashed radio and append a `code,nickname` row to a CSV log. The UV-5R also gets its power-on message rewritten to match.
+- **JSON → CHIRP CSV** — convert your memory files into CHIRP's import format.
+- **Pre-built binaries** — every push to `main` produces standalone Linux and Windows binaries via GitHub Actions; no Python required for end users.
 
 ## Supported radios
 
-Radio is selected with `-R <id>`. Currently registered:
+| Model ID | Hardware |
+|----------|----------|
+| `uv5r` | Baofeng UV-5R, UV-5R Plus, UV-5RA |
+| `uv6r` | Baofeng UV-6R |
+| `uv82` | Baofeng UV-82 |
+| `uv25` | Baofeng UV-25 / UV-17 Pro |
+| `rt470` | Radtel RT-470 |
+| `rt470x` | Radtel RT-470X |
+| `rt900bt` | Radtel RT-900BT |
 
-| ID | Models | Driver |
-|----|--------|--------|
-| `uv5r` | Baofeng UV-5R, UV-5R Plus, UV-5RA | `BaofengUV5R` |
-| `uv6r` | Baofeng UV-6R | `UV6R` |
-| `uv82` | Baofeng UV-82 | `BaofengUV82Radio` |
-| `uv25` | Baofeng UV-25 | `UV25` |
-| `rt470` | Radtel RT-470 | `RT470Radio` |
-| `rt470x` | Radtel RT-470X | `RT470XRadio` |
-| `rt900bt` | Radtel RT-900BT | `RT900BT` |
+(UV-9R and K5 Plus drivers are present but not registered — see TODOs in [cli/drivers.py](cli/drivers.py).)
 
-Unregistered/WIP in source: `uv9r`, `k5plus` (driver present but `@register_radio` not applied — see TODOs in [radijator.py](radijator.py)).
+## Quick start (end users)
 
-## GUI
+Grab the latest `radijator-linux.zip` or `radijator-windows.zip` from the [Actions](../../actions) tab on GitHub. Inside you'll find two executables:
 
-PySide6 GUI wrapping the `program` and `convert` commands. Tabbed UI with a shared log console and progress bar; long serial operations run on a background thread.
+- `radijator` / `radijator.exe` — the CLI.
+- `radijator-gui` / `radijator-gui.exe` — the GUI.
 
-```sh
-pip install -r requirements.txt
-python radijator_gui.py
-```
+On Linux, add yourself to the `dialout` group so you can talk to the USB-serial cable. The user manual ([user-manual/main.typ](user-manual/main.typ), built as a PDF in CI) walks through everything: install, GUI tour, CLI reference, file formats, troubleshooting.
 
-Program tab: radio model dropdown, serial port dropdown (auto-listed from pyserial with Refresh), operation selector (print-settings / load-profile / load-memory / load-profile-and-memory), profile picker, memory list (multi-file, ordered), verbose checkbox. Convert tab: input JSON + output CSV pickers.
+## Development setup
 
-On Windows, serial ports appear as `COM3`, `COM4`, …; on Linux typically `/dev/ttyUSB0`.
-
-## Commands
-
-```
-radijator <command> [options]
-```
-
-### `program` — flash radio over serial
-
-Common flags:
-
-- `-p, --port` — serial port (default `/dev/ttyUSB0`)
-- `-R, --radio-model` — one of the IDs above (required)
-- `--verbose` — log every setting and memory written
-
-Nested subcommands:
-
-| Subcommand | Purpose |
-|------------|---------|
-| `print-settings` | Download settings from radio and print them. No upload. |
-| `load-profile -P <profile.json>` | Apply a settings profile. |
-| `load-memory -M <mem.json> [-M <mem2.json> ...]` | Clear and write memory channels. |
-| `load-profile-and-memory -P <profile.json> -M <mem.json> [-M ...]` | Both, in one serial session. |
-
-Flow for non-`print-settings` commands: open serial → `sync_in` → apply profile/memories → `sync_out`. After download, waits `RESET_TIME` seconds (per-model, 3–6s) for the radio to reset before closing the port.
-
-Example:
+A CHIRP checkout sits next to this repo and gets installed into the venv:
 
 ```sh
-radijator program -p /dev/ttyUSB0 -R uv5r load-profile-and-memory \
-    -P settings_profile.json -M memories/pmr.json --verbose
-```
-
-### `convert` — JSON → CHIRP CSV
-
-```sh
-radijator convert -i memories/pmr.json -o pmr.csv
-```
-
-Fills CHIRP fields (Location, Name, Frequency in MHz, Duplex, Offset, Tone, DTCS, Mode, Power, …) with defaults when missing.
-
-### `random-dcs` — assign random DCS codes
-
-```sh
-radijator random-dcs -i memories/pmr.json -o memories/pmr-dcs.json
-```
-
-Sets `tone=DTCS`, random `rdcs_code`/`tdcs_code` (same pair) from `DTCS_CODES`, random polarity from `NN`/`RR`. Writes a new JSON.
-
-## File formats
-
-### Memory JSON (array of channels)
-
-Minimum:
-
-```json
-[
-  { "name": "PMR  1", "frequency": 446006250 }
-]
-```
-
-Optional keys (defaults in parens): `number`, `tone` (`""`), `rdcs_code` (`23`), `tdcs_code` (`23`), `dcs_polarity` (`"NN"`), `mode` (`"NFM"`), `tuning_step` (`5.0`). Frequency is in Hz. Channel numbers are auto-assigned from 1 in array order.
-
-`convert` accepts extra fields: `duplex`, `offset`, `rToneFreq`, `cToneFreq`, `cross_mode`, `tstep`, `skip`, `power`, `comment`, `urcall`, `rpt1call`, `rpt2call`, `dvcode`.
-
-### Settings profile JSON
-
-One pretty key per setting, then per-model `{name, value}` mapping. Missing model = setting skipped for that radio.
-
-```json
-{
-  "Squelch Level": {
-    "uv5r":  { "name": "squelch",          "value": 1 },
-    "uv25":  { "name": "settings.squelch", "value": 1 },
-    "rt470": { "name": "sql",              "value": 1 }
-  }
-}
-```
-
-`name` is the CHIRP setting path walked via `settings.walk()`. `value` is written with the setting's `__setitem__(0, value)`.
-
-See [settings_profile.json](settings_profile.json) for a full example.
-
-## Setting up
-
-No clean install yet — hotwired against a CHIRP checkout.
-
-Layout:
-
-```
-.
-|- chirp       # cloned CHIRP repo
-|- radijator   # this repo
-```
-
-Tested on Linux (Fedora 43). Should work elsewhere with minimal tweaks.
-
-> [!CAUTION]
-> On Linux, comment out `wxPython` in CHIRP's `requirements.txt` and install it from the system package manager.
-
-```sh
-cd chirp
+./download_dev_dependencies.sh    # sparse-clone of kk7ds/chirp into ./chirp/
 python -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
+source .venv/bin/activate         # Windows: .venv\Scripts\activate
+pip install -r requirements-dev.txt
+pip install ./chirp
+pre-commit install                # black formatter on every commit
 ```
 
-Wrapper script in `$PATH` (e.g. `$HOME/.local/bin/radijator`):
+On Linux, comment out the `wxPython` line in `chirp/requirements.txt` before installing — Radijator doesn't use wxPython directly.
 
-```bash
-#!/bin/bash
-
-BASE_DIRECTORY=/path/to/base/directory
-
-source $BASE_DIRECTORY/chirp/.venv/bin/activate
-export PYTHONPATH="$PYTHONPATH:$BASE_DIRECTORY/chirp:/usr/lib64/python3.14/site-packages"
-python $BASE_DIRECTORY/radijator/radijator.py $@
-deactivate
-```
-
-## Building standalone binaries
-
-PyInstaller spec produces both `radijator` (CLI, console) and `radijator-gui` (windowed) in `dist/`:
+Run it:
 
 ```sh
-pip install -r requirements.txt pyinstaller
-pyinstaller radijator.spec
-ls dist/   # radijator, radijator-gui
+python radijator.py --help        # CLI
+python radijator_gui.py           # GUI
+typst compile --root user-manual user-manual/main.typ    # user manual PDF
 ```
 
-Run `pyinstaller` inside the same venv that has CHIRP's deps installed (see Setting up) so `chirp/chirp` is resolvable. On Windows, the commands are identical; the outputs are `radijator.exe` and `radijator-gui.exe`.
+Architecture notes, gotchas (CHIRP's stdout hijack, DeprecationWarning ordering, …), and the recipe for adding a new radio live in [AGENTS.md](AGENTS.md).
+
+## AI-assisted development
+
+This project is developed with help from AI agents — [Claude Code](https://claude.com/claude-code) at the moment. The [AGENTS.md](AGENTS.md) file (which `CLAUDE.md` symlinks to) gives any fresh agent session the context it needs to be productive: repo layout, code style, architectural decisions, and the non-obvious gotchas. Human review still happens for every change.
 
 ## License
 
-BSD 2-clause license
+BSD 2-clause. See [LICENSE](LICENSE).
 
 ## Author
 

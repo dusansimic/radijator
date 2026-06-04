@@ -60,12 +60,21 @@ succeeds.
 === Progress output
 
 When stdout is attached to a terminal, `program` renders a live
-progress bar that tracks every phase reported by the underlying CHIRP
-driver — byte-level download/upload counts, per-channel memory
-clear/write counts. Each phase label starts a fresh line. When stdout
-is piped or redirected, the bar is suppressed and only the existing
-`Downloading…`, `Uploading…`, etc. log lines are printed, keeping
-scripted output clean.
+display built on the #link("https://github.com/Textualize/rich")[Rich]
+library:
+
+- one *progress bar* per phase reported by the underlying CHIRP
+  driver — byte-level download/upload counts, per-channel memory
+  clear/write counts. Completed bars stay visible.
+- a *spinner status line* above the bars for single-step phases that
+  do not report numeric progress — e.g. "Applying settings
+  profile...", "Wait 6 seconds for radio to reset...".
+- timestamped log lines for each `Downloading…`, `Uploading…`,
+  `Done.` message.
+
+When stdout is piped or redirected, the live display is suppressed
+and Radijator falls back to plain `print` for log lines (no progress
+bar, no spinner), keeping scripted output clean.
 
 === Mode: `print-settings`
 

@@ -18,6 +18,15 @@ __version__ = "1.0.0"
 # Importing cli.drivers populates RADIO_MODEL_ID_CLASS_DICT via the
 # @register_radio decorator side effect; do this before exposing the dict.
 from cli import drivers as _drivers  # noqa: F401
+
+# chirp.wxui sets logging.captureWarnings(True), and chirp.drivers
+# prepends a "once" filter for its own DeprecationWarnings. We want them
+# silenced so the chatty non-byte-native get_raw()/set_raw() messages
+# don't clutter the live progress display. Install the ignore filter
+# *after* chirp.drivers has installed its filter so ours ends up at the
+# front of the warnings filter chain.
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning, module=r"chirp\..*")
 from cli.convert import run_convert  # noqa: F401
 from cli.dtmf import DTMF_CODE_RE, _next_dtmf_code  # noqa: F401
 from cli.main import _log_crash, main

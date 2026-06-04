@@ -5,7 +5,7 @@ from typing import Iterable
 
 from .dtmf import DTMF_CODE_RE, _append_dtmf_row
 from .memory import RadijatorMemory
-from .progress import _make_cli_progress
+from .progress import cli_reporter
 from .radio import RADIO_MODEL_ID_CLASS_DICT, RadijatorRadio
 
 
@@ -90,15 +90,17 @@ def run_program(
 
 def handle_program_command(args):
     """Handle the 'program' subcommand with its nested subcommands."""
-    run_program(
-        radio_model=args.radio_model,
-        port=args.port,
-        mode=args.program_command,
-        profile=getattr(args, "profile", None),
-        memory_paths=getattr(args, "memory", None),
-        verbose=args.verbose,
-        progress_fn=_make_cli_progress(),
-        dtmf_code=getattr(args, "dtmf_code", None),
-        dtmf_nickname=getattr(args, "dtmf_nickname", None),
-        dtmf_csv=getattr(args, "dtmf_csv", None),
-    )
+    with cli_reporter() as (log_fn, progress_fn):
+        run_program(
+            radio_model=args.radio_model,
+            port=args.port,
+            mode=args.program_command,
+            profile=getattr(args, "profile", None),
+            memory_paths=getattr(args, "memory", None),
+            verbose=args.verbose,
+            log_fn=log_fn,
+            progress_fn=progress_fn,
+            dtmf_code=getattr(args, "dtmf_code", None),
+            dtmf_nickname=getattr(args, "dtmf_nickname", None),
+            dtmf_csv=getattr(args, "dtmf_csv", None),
+        )

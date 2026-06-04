@@ -29,9 +29,13 @@ def run_program(
           "load-profile-and-memory".
     """
     if mode in ["load-profile", "load-profile-and-memory"] and not profile:
-        raise ValueError("profile is required for load-profile / load-profile-and-memory")
+        raise ValueError(
+            "profile is required for load-profile / load-profile-and-memory"
+        )
     if mode in ["load-memory", "load-profile-and-memory"] and not memory_paths:
-        raise ValueError("memory_paths is required for load-memory / load-profile-and-memory")
+        raise ValueError(
+            "memory_paths is required for load-memory / load-profile-and-memory"
+        )
 
     dtmf_active = any((dtmf_code, dtmf_nickname, dtmf_csv))
     if dtmf_active and not all((dtmf_code, dtmf_nickname, dtmf_csv)):

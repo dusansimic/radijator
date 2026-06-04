@@ -56,16 +56,12 @@ class DtmfTab(QWidget):
         layout.addWidget(table_box, 1)
 
     def _open_existing(self):
-        path, _ = QFileDialog.getOpenFileName(
-            self, "Open DTMF CSV", "", "CSV (*.csv)"
-        )
+        path, _ = QFileDialog.getOpenFileName(self, "Open DTMF CSV", "", "CSV (*.csv)")
         if path:
             self._load(path)
 
     def _create_new(self):
-        path, _ = QFileDialog.getSaveFileName(
-            self, "New DTMF CSV", "", "CSV (*.csv)"
-        )
+        path, _ = QFileDialog.getSaveFileName(self, "New DTMF CSV", "", "CSV (*.csv)")
         if not path:
             return
         if not path.lower().endswith(".csv"):

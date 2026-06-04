@@ -5,15 +5,12 @@ import csv
 import os
 import re
 
-
 DTMF_CODE_RE = re.compile(r"^\*\d{3}#$")
 
 
 def _validate_dtmf_code(value: str) -> str:
     if not DTMF_CODE_RE.match(value):
-        raise argparse.ArgumentTypeError(
-            f"DTMF code must match *ddd# (got {value!r})"
-        )
+        raise argparse.ArgumentTypeError(f"DTMF code must match *ddd# (got {value!r})")
     return value
 
 

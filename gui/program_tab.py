@@ -158,7 +158,9 @@ class ProgramTab(QWidget):
         self.memory_box.setEnabled(mode in ("load-memory", "load-profile-and-memory"))
 
     def _memory_paths(self):
-        return [self.memory_list.item(i).text() for i in range(self.memory_list.count())]
+        return [
+            self.memory_list.item(i).text() for i in range(self.memory_list.count())
+        ]
 
     def _emit_run(self):
         overrides = None

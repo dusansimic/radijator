@@ -5,7 +5,6 @@ import random
 
 from chirp.chirp_common import DTCS_CODES as DCS_CODES
 
-
 DCS_POLARITIES = ["NN", "RR"]
 
 

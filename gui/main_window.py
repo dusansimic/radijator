@@ -191,7 +191,9 @@ class MainWindow(QMainWindow):
 
     def _run_convert(self, kwargs: dict):
         if not kwargs.get("input_path") or not kwargs.get("output_path"):
-            QMessageBox.warning(self, "Missing input", "Input and output paths are required.")
+            QMessageBox.warning(
+                self, "Missing input", "Input and output paths are required."
+            )
             return
         self._start_worker(radijator.run_convert, kwargs, with_progress=False)
 
@@ -202,8 +204,12 @@ class MainWindow(QMainWindow):
         if not kwargs.get("radio_model"):
             return "Radio model is required."
         mode = kwargs.get("mode")
-        if mode in ("load-profile", "load-profile-and-memory") and not kwargs.get("profile"):
+        if mode in ("load-profile", "load-profile-and-memory") and not kwargs.get(
+            "profile"
+        ):
             return "Profile JSON is required for this operation."
-        if mode in ("load-memory", "load-profile-and-memory") and not kwargs.get("memory_paths"):
+        if mode in ("load-memory", "load-profile-and-memory") and not kwargs.get(
+            "memory_paths"
+        ):
             return "At least one memory JSON file is required for this operation."
         return ""

@@ -1,0 +1,10 @@
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+# Black already honours .gitignore, but spell out the legacy reference
+# code under deprecated/ so it isn't reformatted by accident.
+extend-exclude = '''
+/(
+    deprecated
+)/
+'''

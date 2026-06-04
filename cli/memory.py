@@ -8,7 +8,9 @@ class RadijatorMemory:
     name: str = None
     freq: int = None
     power_level: PowerLevel = None
-    tone: str = None  # CHIRP tmode: "", "Tone", "TSQL", "DTCS", "DTCS-R", "TSQL-R", "Cross"
+    tone: str = (
+        None  # CHIRP tmode: "", "Tone", "TSQL", "DTCS", "DTCS-R", "TSQL-R", "Cross"
+    )
     rdcs_code: int = None
     tdcs_code: int = None
     dcs_polarity: int = None

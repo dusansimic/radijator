@@ -45,16 +45,12 @@ class ConvertTab(QWidget):
         layout.addStretch(1)
 
     def _pick_input(self):
-        path, _ = QFileDialog.getOpenFileName(
-            self, "Input JSON", "", "JSON (*.json)"
-        )
+        path, _ = QFileDialog.getOpenFileName(self, "Input JSON", "", "JSON (*.json)")
         if path:
             self.input_edit.setText(path)
 
     def _pick_output(self):
-        path, _ = QFileDialog.getSaveFileName(
-            self, "Output CSV", "", "CSV (*.csv)"
-        )
+        path, _ = QFileDialog.getSaveFileName(self, "Output CSV", "", "CSV (*.csv)")
         if path:
             self.output_edit.setText(path)
 

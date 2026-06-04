@@ -6,6 +6,7 @@ import csv
 import os
 import random
 import re
+import sys
 import time
 from typing import Iterable
 
@@ -167,11 +168,17 @@ class RadijatorRadio:
     def __init__(self, serial_port: str):
         self.radio = self.DRIVER_CLASS(None)
         self._serial_port = serial_port
+        self._progress_fn = None
+        self.radio.status_fn = self._on_chirp_status
         features = self.radio.get_features()
         memory_bounds = features.memory_bounds
         lower_memory, upper_memory = memory_bounds[0], memory_bounds[1]
         self.MEMORY_RANGE = range(lower_memory, upper_memory + 1)
         self.DEFAULT_POWER_LEVEL = features.valid_power_levels[0]
+
+    def _on_chirp_status(self, status):
+        if self._progress_fn is not None:
+            self._progress_fn(status.cur, status.max, status.msg)
 
     def _open_serial(self, serial_port: str) -> SerialTrace:
         serial_object = SerialTrace(
@@ -188,20 +195,28 @@ class RadijatorRadio:
     def _close_serial(self, serial: SerialTrace):
         serial.close()
 
-    def download_fw(self, wait_for_reset: bool = True, log_fn=print):
+    def download_fw(self, wait_for_reset: bool = True, log_fn=print, progress_fn=None):
         pipe = self._open_serial(self._serial_port)
         self.radio.set_pipe(pipe)
-        self.radio.sync_in()
+        self._progress_fn = progress_fn
+        try:
+            self.radio.sync_in()
+        finally:
+            self._progress_fn = None
         self._settings = self.radio.get_settings()
         if wait_for_reset:
             log_fn(f"Wait {self.RESET_TIME} seconds for radio to reset...")
             time.sleep(self.RESET_TIME)
         self._close_serial(pipe)
 
-    def upload_fw(self):
+    def upload_fw(self, log_fn=print, progress_fn=None):
         pipe = self._open_serial(self._serial_port)
         self.radio.set_pipe(pipe)
-        self.radio.sync_out()
+        self._progress_fn = progress_fn
+        try:
+            self.radio.sync_out()
+        finally:
+            self._progress_fn = None
         self._close_serial(pipe)
 
     def _transpose_settings_profile(self, profile_file_name: str) -> dict:
@@ -519,10 +534,12 @@ def run_program(
 
     radio: RadijatorRadio = RADIO_MODEL_ID_CLASS_DICT[radio_model](port)
 
-    if progress_fn:
-        progress_fn(0, 1, "Downloading from radio")
     log_fn("Downloading settings from radio...")
-    radio.download_fw(wait_for_reset=mode != "print-settings", log_fn=log_fn)
+    radio.download_fw(
+        wait_for_reset=mode != "print-settings",
+        log_fn=log_fn,
+        progress_fn=progress_fn,
+    )
 
     if mode in ["load-profile", "load-profile-and-memory"]:
         radio.set_settings_profile(
@@ -554,14 +571,41 @@ def run_program(
             line2 = digits[:width].center(width)
             radio.set_power_on_message(line1, line2, log_fn=log_fn)
 
-        if progress_fn:
-            progress_fn(1, 1, "Uploading to radio")
         log_fn("Uploading to radio...")
-        radio.upload_fw()
+        radio.upload_fw(log_fn=log_fn, progress_fn=progress_fn)
         log_fn("Done.")
 
         if dtmf_active:
             _append_dtmf_row(dtmf_csv, dtmf_code, dtmf_nickname, log_fn=log_fn)
+
+
+def _make_cli_progress():
+    """Return a progress_fn that draws a single-line bar on the TTY.
+
+    Each new label starts a fresh line; lines complete with a newline
+    when cur reaches total. When stdout is not a TTY (piped/redirected),
+    the callable is a no-op so logs stay clean.
+    """
+    state = {"label": None}
+
+    def progress(cur, total, label):
+        if not sys.stdout.isatty():
+            return
+        if label != state["label"]:
+            if state["label"] is not None:
+                sys.stdout.write("\n")
+            state["label"] = label
+        width = 30
+        pct = (cur / total) if total else 0.0
+        filled = int(pct * width)
+        bar = "#" * filled + "-" * (width - filled)
+        sys.stdout.write(f"\r{label}: [{bar}] {cur}/{total}")
+        sys.stdout.flush()
+        if total and cur >= total:
+            sys.stdout.write("\n")
+            state["label"] = None
+
+    return progress
 
 
 def handle_program_command(args):
@@ -573,6 +617,7 @@ def handle_program_command(args):
         profile=getattr(args, "profile", None),
         memory_paths=getattr(args, "memory", None),
         verbose=args.verbose,
+        progress_fn=_make_cli_progress(),
         dtmf_code=getattr(args, "dtmf_code", None),
         dtmf_nickname=getattr(args, "dtmf_nickname", None),
         dtmf_csv=getattr(args, "dtmf_csv", None),

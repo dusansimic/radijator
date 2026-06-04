@@ -57,6 +57,16 @@ radijator program -R uv5r -p /dev/ttyUSB0 \
 The row `*042#,alice` is appended to `dtmf.csv` only if the flash
 succeeds.
 
+=== Progress output
+
+When stdout is attached to a terminal, `program` renders a live
+progress bar that tracks every phase reported by the underlying CHIRP
+driver — byte-level download/upload counts, per-channel memory
+clear/write counts. Each phase label starts a fresh line. When stdout
+is piped or redirected, the bar is suppressed and only the existing
+`Downloading…`, `Uploading…`, etc. log lines are printed, keeping
+scripted output clean.
+
 === Mode: `print-settings`
 
 Reads the current settings from the radio and prints them to stdout.

@@ -207,10 +207,15 @@ Progress bar states:
 - *Idle* — nothing running.
 - *Running...* — operation started, step count not yet known
   (indeterminate animation).
-- *Downloading from radio* — reading radio contents.
+- *Cloning from radio (cur/max)* — byte-level download progress
+  reported by the CHIRP driver during the serial read. The label and
+  byte counts are exactly what the underlying driver emits.
+- *Clearing memories (n/total)* — wiping each channel before the
+  write.
 - *Writing memories (n/total)* — per-channel counter during the write
   loop. This is the longest phase on most radios.
-- *Uploading to radio* — sending the modified image back.
+- *Cloning to radio (cur/max)* — byte-level upload progress while the
+  modified image is sent back.
 - *Done* — success (bar full, green on most themes).
 - *Failed* — an exception was raised; the full traceback is in the log.
 

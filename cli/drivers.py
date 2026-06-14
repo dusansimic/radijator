@@ -8,7 +8,7 @@ from chirp.drivers.uv5r import BaofengUV5R, BaofengUV82Radio
 from chirp.drivers.uv5r import PTTID_LIST as UV5R_PTTID_LIST
 from chirp.drivers.uv6r import UV6R
 from chirp.drivers.baofeng_wp970i import UV9R
-from chirp.drivers.baofeng_uv17Pro import UV25, BFK5Plus
+from chirp.drivers.baofeng_uv17Pro import UV25, BFK5Plus, UV5RMini
 from chirp.drivers.mml_jc8810 import RT470XRadio, RT470Radio
 from chirp.drivers.radtel_rt900 import RT900BT
 from chirp.settings import (
@@ -119,6 +119,13 @@ class RadijatorUV82(RadijatorRadio):
 class RadijatorUV25(RadijatorRadio):
     DRIVER_CLASS = UV25
     RADIJATOR_SETTINGS_PROFILE_ID = "uv25"
+    RESET_TIME = 4
+
+
+@register_radio
+class RadijatorUV5RMini(RadijatorRadio):
+    DRIVER_CLASS = UV5RMini
+    RADIJATOR_SETTINGS_PROFILE_ID = "uv5rmini"
     RESET_TIME = 4
 
 

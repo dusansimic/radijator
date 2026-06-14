@@ -108,12 +108,11 @@ class RadijatorUV9R(RadijatorRadio):
     RESET_TIME = 6
 
 
-# TODO: Check if it works
-# TODO: Add to profile
 @register_radio
 class RadijatorUV82(RadijatorRadio):
     DRIVER_CLASS = BaofengUV82Radio
     RADIJATOR_SETTINGS_PROFILE_ID = "uv82"
+    RESET_TIME = 6
 
 
 @register_radio

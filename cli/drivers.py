@@ -21,19 +21,17 @@ from .memory import RadijatorMemory
 from .radio import RadijatorRadio, register_radio
 
 
-@register_radio
-class RadijatorUV5R(RadijatorRadio):
-    """
-    Supported models:
-    - Baofeng UV-5R
-    - Baofeng UV-5R Plus
-    - Baofeng UV-5RA
-    """
+class _BaofengUV5RFamily(RadijatorRadio):
+    """Shared DTMF / per-memory PTT-ID / power-on-message logic for the
+    UV-5R, UV-82, UV-6R and UV-9R drivers. Subclasses override the
+    setting-path constants where their CHIRP driver wraps settings under
+    a `settings.*` group."""
 
-    DRIVER_CLASS = BaofengUV5R
-    RADIJATOR_SETTINGS_PROFILE_ID = "uv5r"
-    RESET_TIME = 6
     DTMF_SETTING_NAME = "pttid/0.code"
+    DTMF_SIDETONE_SETTING_NAME = "dtmfst"
+    PONMSG_SETTING_NAME = "ponmsg"
+    POWERON_MSG_LINE1_NAME = "poweron_msg.line1"
+    POWERON_MSG_LINE2_NAME = "poweron_msg.line2"
     POWERON_MSG_WIDTH = 7
 
     def set_dtmf_code(self, code: str, log_fn=print):
@@ -43,7 +41,7 @@ class RadijatorUV5R(RadijatorRadio):
             self.DTMF_SETTING_NAME: code,
             # DT+ANI keys both DTMF and ANI sidetones on PTT, otherwise
             # the radio writes the code internally but never transmits it.
-            "dtmfst": "DT+ANI",
+            self.DTMF_SIDETONE_SETTING_NAME: "DT+ANI",
         }
         found = set()
         for setting in self._settings.walk():
@@ -77,9 +75,9 @@ class RadijatorUV5R(RadijatorRadio):
         if self._settings is None:
             raise RuntimeError("download settings before setting power-on message")
         targets = {
-            "poweron_msg.line1": line1,
-            "poweron_msg.line2": line2,
-            "ponmsg": "Message",
+            self.POWERON_MSG_LINE1_NAME: line1,
+            self.POWERON_MSG_LINE2_NAME: line2,
+            self.PONMSG_SETTING_NAME: "Message",
         }
         found = set()
         for setting in self._settings.walk():
@@ -97,24 +95,42 @@ class RadijatorUV5R(RadijatorRadio):
         self._settings = self.radio.get_settings()
 
 
+@register_radio
+class RadijatorUV5R(_BaofengUV5RFamily):
+    """
+    Supported models:
+    - Baofeng UV-5R
+    - Baofeng UV-5R Plus
+    - Baofeng UV-5RA
+    """
+
+    DRIVER_CLASS = BaofengUV5R
+    RADIJATOR_SETTINGS_PROFILE_ID = "uv5r"
+    RESET_TIME = 6
+
+
 # TODO: Add to profile
 @register_radio
-class RadijatorUV6R(RadijatorRadio):
+class RadijatorUV6R(_BaofengUV5RFamily):
     DRIVER_CLASS = UV6R
     RADIJATOR_SETTINGS_PROFILE_ID = "uv6r"
     RESET_TIME = 6
+    DTMF_SIDETONE_SETTING_NAME = "settings.dtmfst"
+    PONMSG_SETTING_NAME = "settings.ponmsg"
 
 
 # TODO: Check if it works
 # TODO: Add to profile
-class RadijatorUV9R(RadijatorRadio):
+class RadijatorUV9R(_BaofengUV5RFamily):
     DRIVER_CLASS = UV9R
     RADIJATOR_SETTINGS_PROFILE_ID = "uv9r"
     RESET_TIME = 6
+    DTMF_SIDETONE_SETTING_NAME = "settings.dtmfst"
+    PONMSG_SETTING_NAME = "settings.ponmsg"
 
 
 @register_radio
-class RadijatorUV82(RadijatorRadio):
+class RadijatorUV82(_BaofengUV5RFamily):
     DRIVER_CLASS = BaofengUV82Radio
     RADIJATOR_SETTINGS_PROFILE_ID = "uv82"
     RESET_TIME = 6

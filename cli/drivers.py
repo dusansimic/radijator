@@ -8,7 +8,7 @@ from chirp.drivers.uv5r import BaofengUV5R, BaofengUV82Radio
 from chirp.drivers.uv5r import PTTID_LIST as UV5R_PTTID_LIST
 from chirp.drivers.uv6r import UV6R
 from chirp.drivers.baofeng_wp970i import UV9R
-from chirp.drivers.baofeng_uv17Pro import UV25, BFK5Plus, UV5RMini
+from chirp.drivers.baofeng_uv17Pro import UV25, BFK5Plus, UV5RMini, UV21ProV2
 from chirp.drivers.mml_jc8810 import RT470XRadio, RT470Radio
 from chirp.drivers.radtel_rt900 import RT900BT
 from chirp.settings import (
@@ -39,17 +39,22 @@ class RadijatorUV5R(RadijatorRadio):
     def set_dtmf_code(self, code: str, log_fn=print):
         if self._settings is None:
             raise RuntimeError("download settings before setting DTMF code")
-        target = None
+        targets = {
+            self.DTMF_SETTING_NAME: code,
+            # DT+ANI keys both DTMF and ANI sidetones on PTT, otherwise
+            # the radio writes the code internally but never transmits it.
+            "dtmfst": "DT+ANI",
+        }
+        found = set()
         for setting in self._settings.walk():
-            if setting.get_name() == self.DTMF_SETTING_NAME:
-                target = setting
-                break
-        if target is None:
-            raise RuntimeError(
-                f"DTMF setting {self.DTMF_SETTING_NAME!r} not found in radio settings"
-            )
-        target.__setitem__(0, code)
-        log_fn(f"DTMF slot 1 set to {code}")
+            name = setting.get_name()
+            if name in targets:
+                setting.__setitem__(0, targets[name])
+                found.add(name)
+        missing = set(targets) - found
+        if missing:
+            raise RuntimeError(f"DTMF settings not found in radio settings: {missing}")
+        log_fn(f"DTMF slot 1 set to {code}; sidetone set to DT+ANI")
         self.radio.set_settings(self._settings)
         self._settings = self.radio.get_settings()
 
@@ -129,6 +134,13 @@ class RadijatorUV5RMini(RadijatorRadio):
     RESET_TIME = 4
 
 
+@register_radio
+class RadijatorUV21Pro(RadijatorRadio):
+    DRIVER_CLASS = UV21ProV2
+    RADIJATOR_SETTINGS_PROFILE_ID = "uv21pro"
+    RESET_TIME = 4
+
+
 # TODO: Fix issue with exception when logging
 # TODO: Add to profile
 class RadijatorK5Plus(RadijatorRadio):
@@ -138,7 +150,6 @@ class RadijatorK5Plus(RadijatorRadio):
 
 
 # TODO: Baofeng UV-17 variants
-# TODO: Baofeng UV-21 variants
 
 
 @register_radio

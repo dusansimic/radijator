@@ -155,6 +155,50 @@ class RadijatorUV21Pro(RadijatorRadio):
     DRIVER_CLASS = UV21ProV2
     RADIJATOR_SETTINGS_PROFILE_ID = "uv21pro"
     RESET_TIME = 4
+    DTMF_SETTING_NAME = "pttid/0.code"
+    # UV-17 Pro family exposes settings.sidetone (not settings.dtmfst);
+    # values come from LIST_SIDE_TONE in chirp/drivers/baofeng_uv17Pro.py.
+    SIDETONE_SETTING_NAME = "settings.sidetone"
+    SIDETONE_VALUE = "KB + ANI Side Tone"
+
+    def set_dtmf_code(self, code: str, log_fn=print):
+        if self._settings is None:
+            raise RuntimeError("download settings before setting DTMF code")
+        targets = {
+            self.DTMF_SETTING_NAME: code,
+            self.SIDETONE_SETTING_NAME: self.SIDETONE_VALUE,
+        }
+        found = set()
+        for setting in self._settings.walk():
+            name = setting.get_name()
+            if name in targets:
+                setting.__setitem__(0, targets[name])
+                found.add(name)
+        missing = set(targets) - found
+        if missing:
+            raise RuntimeError(f"DTMF settings not found in radio settings: {missing}")
+        log_fn(f"DTMF slot 1 set to {code}; sidetone set to {self.SIDETONE_VALUE}")
+        self.radio.set_settings(self._settings)
+        self._settings = self.radio.get_settings()
+
+    def set_power_on_message(self, line1: str, line2: str, log_fn=print):
+        # UV-21 Pro has no "Message" power-on display mode; skip silently.
+        pass
+
+    def _apply_memory_extras(self, chirp_mem: Memory, rad_mem: RadijatorMemory):
+        if not rad_mem.ptt_id:
+            return
+        chirp_mem.extra = RadioSettingGroup("Extra", "extra")
+        chirp_mem.extra.append(
+            RadioSetting(
+                "pttid",
+                "PTT ID",
+                RadioSettingValueList(
+                    UV5R_PTTID_LIST,
+                    current_index=UV5R_PTTID_LIST.index("BOT"),
+                ),
+            )
+        )
 
 
 # TODO: Fix issue with exception when logging

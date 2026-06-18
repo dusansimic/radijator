@@ -67,9 +67,14 @@ class MainWindow(QMainWindow):
         quit_action.triggered.connect(self.close)
         file_menu.addAction(quit_action)
 
+        # macOS Qt's TextHeuristicRole moves actions whose text looks like
+        # "Configure...", "Preferences", "Settings", etc. into the native
+        # application menu, where they sometimes vanish. Pin every Options
+        # entry to NoRole to keep them in the regular menu we put them in.
         options_menu = self.menuBar().addMenu("&Options")
         self.msg_override_action = QAction("Override power-on &message", self)
         self.msg_override_action.setCheckable(True)
+        self.msg_override_action.setMenuRole(QAction.MenuRole.NoRole)
         self.msg_override_action.toggled.connect(
             self.program_tab.set_message_override_visible
         )
@@ -77,6 +82,7 @@ class MainWindow(QMainWindow):
 
         self.dtmf_action = QAction("Configure &DTMF code", self)
         self.dtmf_action.setCheckable(True)
+        self.dtmf_action.setMenuRole(QAction.MenuRole.NoRole)
         self.dtmf_action.toggled.connect(self._toggle_dtmf_tab)
         options_menu.addAction(self.dtmf_action)
 
@@ -88,6 +94,7 @@ class MainWindow(QMainWindow):
         options_menu.addSeparator()
         self.show_all_ports_action = QAction("Show &all serial ports", self)
         self.show_all_ports_action.setCheckable(True)
+        self.show_all_ports_action.setMenuRole(QAction.MenuRole.NoRole)
         self.show_all_ports_action.toggled.connect(
             lambda checked: self.program_tab.set_port_filter_usb_only(not checked)
         )

@@ -205,12 +205,23 @@ class MainWindow(QMainWindow):
         self._start_worker(radijator.run_program, kwargs, with_progress=True)
 
     def _run_convert(self, kwargs: dict):
-        if not kwargs.get("input_path") or not kwargs.get("output_path"):
+        input_paths = self.program_tab.memory_paths()
+        output_path = kwargs.get("output_path")
+        if not input_paths:
             QMessageBox.warning(
-                self, "Missing input", "Input and output paths are required."
+                self,
+                "Missing input",
+                "Select at least one memory file on the Program tab.",
             )
             return
-        self._start_worker(radijator.run_convert, kwargs, with_progress=False)
+        if not output_path:
+            QMessageBox.warning(self, "Missing input", "Output CSV path is required.")
+            return
+        self._start_worker(
+            radijator.run_convert,
+            {"input_paths": input_paths, "output_path": output_path},
+            with_progress=False,
+        )
 
     @staticmethod
     def _validate_program(kwargs: dict) -> str:

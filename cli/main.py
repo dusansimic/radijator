@@ -130,15 +130,15 @@ def main():
         "convert", help="Convert JSON memory files to CHIRP CSV format"
     )
     convert_parser.add_argument(
-        "-i",
-        "--input",
+        "-M",
+        "--memory",
         required=True,
-        help="Path to the input JSON file containing memories.",
+        action="append",
+        help="Path to a memory JSON file. Repeat to concatenate multiple "
+        "files into a single CSV.",
     )
     convert_parser.add_argument(
-        "-o",
-        "--output",
-        required=True,
+        "output",
         help="Path to the output CSV file to save CHIRP formatted memories.",
     )
 

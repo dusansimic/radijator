@@ -128,15 +128,24 @@ radijator program -R uv5r -p /dev/ttyUSB0 load-profile-and-memory \
 
 == `convert` subcommand
 
-Converts a Radijator memory JSON into a CHIRP-compatible CSV. No radio
-involved.
+Converts one or more Radijator memory JSON files into a single
+CHIRP-compatible CSV. No radio involved.
 
 ```sh
-radijator convert -i memories/pmr.json -o pmr.csv
+radijator convert -M memories/pmr.json pmr.csv
+radijator convert -M memories/pmr.json -M memories/repeaters.json all.csv
 ```
 
-- `-i`, `--input` — required, source JSON.
-- `-o`, `--output` — required, destination CSV (overwrites).
+- `-M`, `--memory` — required, path to a memory JSON file. Repeat
+  to concatenate multiple files in order; the resulting CSV
+  numbers channels sequentially across the whole concatenation.
+- *positional* `output` — destination CSV path. Overwrites if it
+  exists.
+
+*Breaking change*: previous releases used `-i/--input` and
+`-o/--output`. The flag names mirror `program load-memory -M` now
+and the output is a positional argument. Migrate scripts
+accordingly.
 
 == `random-dcs` subcommand
 

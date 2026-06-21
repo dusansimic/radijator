@@ -162,9 +162,10 @@ class ProgramTab(QWidget):
     def _update_enablement(self):
         mode = self.mode_combo.currentData()
         self.profile_box.setEnabled(mode in ("load-profile", "load-profile-and-memory"))
-        self.memory_box.setEnabled(mode in ("load-memory", "load-profile-and-memory"))
+        # memory_box stays interactive in every mode — the list also
+        # feeds the Convert tab.
 
-    def _memory_paths(self):
+    def memory_paths(self):
         return [
             self.memory_list.item(i).text() for i in range(self.memory_list.count())
         ]
@@ -182,7 +183,7 @@ class ProgramTab(QWidget):
                 "port": self.port_combo.currentText(),
                 "mode": self.mode_combo.currentData(),
                 "profile": self.profile_edit.text() or None,
-                "memory_paths": self._memory_paths() or None,
+                "memory_paths": self.memory_paths() or None,
                 "verbose": self.verbose_check.isChecked(),
                 "profile_overrides": overrides,
             }

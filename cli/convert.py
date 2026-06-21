@@ -2,6 +2,7 @@
 
 import csv
 import json
+from typing import Iterable
 
 
 def _to_chirp_format(memories):
@@ -34,15 +35,25 @@ def _to_chirp_format(memories):
     return chirp_memories
 
 
-def run_convert(input_path: str, output_path: str, log_fn=print):
-    """Core convert workflow, usable by CLI and GUI."""
-    if not input_path:
-        raise ValueError("Input file path is required.")
+def run_convert(input_paths: Iterable[str], output_path: str, log_fn=print):
+    """Core convert workflow, usable by CLI and GUI.
+
+    Each input is a memory JSON (array of channels); they are
+    concatenated in the order given before writing the CSV. Locations
+    in the resulting CSV are sequential across the whole concatenation.
+    """
+    input_paths = list(input_paths or [])
+    if not input_paths:
+        raise ValueError("At least one input file path is required.")
     if not output_path:
         raise ValueError("Output file path is required.")
 
-    with open(input_path, "r", encoding="utf-8") as infile:
-        memories = json.load(infile)
+    memories = []
+    for path in input_paths:
+        with open(path, "r", encoding="utf-8") as infile:
+            data = json.load(infile)
+        log_fn(f"Loaded {len(data)} memories from {path}")
+        memories.extend(data)
 
     with open(output_path, "w", newline="", encoding="utf-8") as csvfile:
         chirp_memories = _to_chirp_format(memories)
@@ -51,9 +62,12 @@ def run_convert(input_path: str, output_path: str, log_fn=print):
         for memory in chirp_memories:
             writer.writerow(memory)
 
-    log_fn(f"Converted {len(memories)} memories from {input_path} to {output_path}")
+    log_fn(
+        f"Converted {len(memories)} memories from "
+        f"{len(input_paths)} file(s) to {output_path}"
+    )
 
 
 def handle_convert_command(args):
     """Handle the 'convert' subcommand."""
-    run_convert(args.input, args.output)
+    run_convert(args.memory, args.output)

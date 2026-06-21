@@ -158,18 +158,25 @@ memory* mode).
 
 #screenshot(
   "/assets/convert-tab.png",
-  [Convert tab with input JSON and output CSV paths set.],
+  [Convert tab with the output CSV path set. Inputs are picked on
+    the Program tab.],
 )
 
-Converts a Radijator memory JSON into a CHIRP-compatible CSV.
+Converts one or more Radijator memory JSON files into a single
+CHIRP-compatible CSV.
 
-- *Input JSON* — the source memory file.
+- *Inputs* — the files in the *Memory files* list on the *Program*
+  tab. Add or remove them there; this tab does not duplicate the
+  picker. Multiple files are concatenated in list order and channels
+  are numbered sequentially across the whole concatenation.
 - *Output CSV* — where to write the result. Overwrites any existing
   file.
-- *Convert* — runs the conversion. A single log line reports how many
-  memories were converted.
+- *Convert* — runs the conversion. A log line per source plus a final
+  total report what was written.
 
-No serial port, no radio needed — this is a pure file transform.
+No serial port, no radio needed — this is a pure file transform. If
+the Program tab's memory list is empty, *Convert* warns and does
+nothing.
 
 == DTMF tab
 

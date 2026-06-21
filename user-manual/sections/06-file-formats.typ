@@ -160,7 +160,12 @@ discover the exact names and their current values.
 == CHIRP CSV output
 
 The `convert` subcommand emits a CSV with the column set CHIRP's
-`File → Open` expects. One row per memory, in array order.
+`File → Open` expects. One row per memory, in array order. When
+multiple JSON files are passed (CLI: repeat `-M`; GUI: list on the
+Program tab), they are concatenated in the given order before
+writing, and the `Location` column numbers channels sequentially
+across the concatenation — file A's memories occupy slots 1..N,
+file B's start at N+1, and so on.
 
 #table(
   columns: (auto, 1fr),

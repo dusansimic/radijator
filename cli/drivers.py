@@ -7,7 +7,7 @@ from chirp.chirp_common import Memory
 from chirp.drivers.uv5r import BaofengUV5R, BaofengUV82Radio
 from chirp.drivers.uv5r import PTTID_LIST as UV5R_PTTID_LIST
 from chirp.drivers.uv6r import UV6R
-from chirp.drivers.baofeng_wp970i import UV9R
+from chirp.drivers.baofeng_wp970i import UV9R, BFA58
 from chirp.drivers.baofeng_uv17Pro import UV25, BFK5Plus, UV5RMini, UV21ProV2
 from chirp.drivers.mml_jc8810 import RT470XRadio, RT470Radio
 from chirp.drivers.radtel_rt900 import RT900BT
@@ -119,11 +119,22 @@ class RadijatorUV6R(_BaofengUV5RFamily):
     PONMSG_SETTING_NAME = "settings.ponmsg"
 
 
-# TODO: Check if it works
 # TODO: Add to profile
+@register_radio
 class RadijatorUV9R(_BaofengUV5RFamily):
     DRIVER_CLASS = UV9R
     RADIJATOR_SETTINGS_PROFILE_ID = "uv9r"
+    RESET_TIME = 6
+    DTMF_SIDETONE_SETTING_NAME = "settings.dtmfst"
+    PONMSG_SETTING_NAME = "settings.ponmsg"
+
+
+# UV-9R Pro shares the BF-A58 driver in CHIRP (it's an Alias of BFA58).
+# TODO: Add to profile
+@register_radio
+class RadijatorUV9RPro(_BaofengUV5RFamily):
+    DRIVER_CLASS = BFA58
+    RADIJATOR_SETTINGS_PROFILE_ID = "uv9rpro"
     RESET_TIME = 6
     DTMF_SIDETONE_SETTING_NAME = "settings.dtmfst"
     PONMSG_SETTING_NAME = "settings.ponmsg"
@@ -143,21 +154,14 @@ class RadijatorUV25(RadijatorRadio):
     RESET_TIME = 4
 
 
-@register_radio
-class RadijatorUV5RMini(RadijatorRadio):
-    DRIVER_CLASS = UV5RMini
-    RADIJATOR_SETTINGS_PROFILE_ID = "uv5rmini"
-    RESET_TIME = 4
+class _BaofengUV17ProFamily(RadijatorRadio):
+    """Shared DTMF / per-memory PTT-ID logic for the UV-17 Pro family
+    (UV-21 Pro V2, UV-5R Mini, …). They expose settings.sidetone (with
+    different values than the UV-5R family's `dtmfst`) and have no
+    "Message" power-on display mode, so set_power_on_message is a
+    silent no-op here."""
 
-
-@register_radio
-class RadijatorUV21Pro(RadijatorRadio):
-    DRIVER_CLASS = UV21ProV2
-    RADIJATOR_SETTINGS_PROFILE_ID = "uv21pro"
-    RESET_TIME = 4
     DTMF_SETTING_NAME = "pttid/0.code"
-    # UV-17 Pro family exposes settings.sidetone (not settings.dtmfst);
-    # values come from LIST_SIDE_TONE in chirp/drivers/baofeng_uv17Pro.py.
     SIDETONE_SETTING_NAME = "settings.sidetone"
     SIDETONE_VALUE = "KB + ANI Side Tone"
 
@@ -182,7 +186,6 @@ class RadijatorUV21Pro(RadijatorRadio):
         self._settings = self.radio.get_settings()
 
     def set_power_on_message(self, line1: str, line2: str, log_fn=print):
-        # UV-21 Pro has no "Message" power-on display mode; skip silently.
         pass
 
     def _apply_memory_extras(self, chirp_mem: Memory, rad_mem: RadijatorMemory):
@@ -199,6 +202,20 @@ class RadijatorUV21Pro(RadijatorRadio):
                 ),
             )
         )
+
+
+@register_radio
+class RadijatorUV5RMini(_BaofengUV17ProFamily):
+    DRIVER_CLASS = UV5RMini
+    RADIJATOR_SETTINGS_PROFILE_ID = "uv5rmini"
+    RESET_TIME = 4
+
+
+@register_radio
+class RadijatorUV21Pro(_BaofengUV17ProFamily):
+    DRIVER_CLASS = UV21ProV2
+    RADIJATOR_SETTINGS_PROFILE_ID = "uv21pro"
+    RESET_TIME = 4
 
 
 # TODO: Fix issue with exception when logging

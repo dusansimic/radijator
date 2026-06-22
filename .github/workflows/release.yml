@@ -1,0 +1,145 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-binaries:
+    name: Build on ${{ matrix.pretty-name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            pretty-name: Linux
+            asset-name: radijator-linux
+            cli-path: dist/radijator
+            gui-path: dist/radijator-gui
+          - os: windows-latest
+            pretty-name: Windows
+            asset-name: radijator-windows
+            cli-path: dist/radijator.exe
+            gui-path: dist/radijator-gui.exe
+          - os: macos-latest
+            pretty-name: macOS
+            asset-name: radijator-macos
+            cli-path: dist/radijator
+            gui-path: dist/radijator-gui
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+
+    - name: Checkout chirp dependency
+      uses: actions/checkout@v6
+      with:
+        repository: kk7ds/chirp
+        path: chirp-src
+
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.14'
+
+    - name: Install dependencies (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+        pip install -r requirements.txt
+        grep -v wxPython ./chirp-src/requirements.txt | pip install -r /dev/stdin
+        pip install ./chirp-src
+
+    - name: Install dependencies (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+        pip install -r requirements.txt
+        pip install -r ./chirp-src/requirements.txt
+        pip install ./chirp-src
+
+    - name: Install dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+        pip install -r requirements.txt
+        grep -v wxPython ./chirp-src/requirements.txt | pip install -r /dev/stdin
+        pip install ./chirp-src
+
+    - name: Build with PyInstaller
+      run: |
+        pyinstaller radijator.spec
+
+    - name: Package binaries (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        zip -j ${{ matrix.asset-name }}.zip ${{ matrix.cli-path }} ${{ matrix.gui-path }}
+
+    - name: Package binaries (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        Compress-Archive -Path ${{ matrix.cli-path }}, ${{ matrix.gui-path }} -DestinationPath ${{ matrix.asset-name }}.zip
+
+    - name: Upload zip artifact
+      uses: actions/upload-artifact@v6
+      with:
+        name: ${{ matrix.asset-name }}
+        path: ${{ matrix.asset-name }}.zip
+        retention-days: 1
+
+  build-manual:
+    name: Compile user manual
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+      with:
+        lfs: true
+
+    - name: Set up Typst
+      uses: typst-community/setup-typst@v5
+
+    - name: Compile user manual
+      run: typst compile --root user-manual user-manual/main.typ radijator-manual.pdf
+
+    - name: Upload PDF artifact
+      uses: actions/upload-artifact@v6
+      with:
+        name: radijator-user-manual
+        path: radijator-manual.pdf
+        retention-days: 1
+
+  release:
+    name: Create GitHub release
+    needs: [build-binaries, build-manual]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v6
+      with:
+        path: artifacts
+
+    - name: Stage release assets
+      run: |
+        mkdir -p release-assets
+        find artifacts -type f \( -name '*.zip' -o -name '*.pdf' \) -exec cp {} release-assets/ \;
+        ls -la release-assets/
+
+    - name: Create release
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        TAG="${GITHUB_REF#refs/tags/}"
+        gh release create "$TAG" \
+          --title "Radijator $TAG" \
+          --generate-notes \
+          release-assets/*

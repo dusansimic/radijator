@@ -140,6 +140,7 @@ jobs:
       run: |
         TAG="${GITHUB_REF#refs/tags/}"
         gh release create "$TAG" \
+          --repo "$GITHUB_REPOSITORY" \
           --title "Radijator $TAG" \
           --generate-notes \
           release-assets/*

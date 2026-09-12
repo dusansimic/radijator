@@ -15,7 +15,7 @@ from chirp.wxui.serialtrace import SerialTrace  # noqa: F401
 _sys.stdout, _sys.stderr = _saved_stdout, _saved_stderr
 del _sys, _saved_stdout, _saved_stderr
 
-__version__ = "1.0.0"
+from cli.version import __version__  # noqa: F401
 
 # Importing cli.drivers populates RADIO_MODEL_ID_CLASS_DICT via the
 # @register_radio decorator side effect; do this before exposing the dict.

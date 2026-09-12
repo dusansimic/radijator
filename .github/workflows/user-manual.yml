@@ -28,7 +28,9 @@ jobs:
       uses: typst-community/setup-typst@v5
 
     - name: Compile user manual
-      run: typst compile --root user-manual user-manual/main.typ user-manual/radijator-manual.pdf
+      run: |
+        typst compile --root user-manual --input version="$(cat VERSION)" \
+          user-manual/main.typ user-manual/radijator-manual.pdf
 
     - name: Upload PDF artifact
       uses: actions/upload-artifact@v6

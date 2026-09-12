@@ -16,6 +16,8 @@
   width: 100%,
 )
 
+#let version = sys.inputs.at("version", default: "dev")
+
 #align(center)[
   #text(size: 26pt, weight: "bold")[Radijator User Manual]
 
@@ -23,7 +25,7 @@
   #text(size: 13pt)[Flashing Chinese radios without the pain]
 
   #v(2em)
-  #text(size: 10pt)[Version 1.0.0]
+  #text(size: 10pt)[Version #version]
 ]
 
 #v(3em)

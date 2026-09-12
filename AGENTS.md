@@ -17,6 +17,7 @@ A workflow tool for flashing Baofeng / Radtel handheld radios via CHIRP drivers.
 │  ├─ convert.py           # run_convert() — JSON memory → CHIRP CSV
 │  ├─ random_dcs.py        # random-dcs helper
 │  ├─ progress.py          # Rich Live + Progress + Status reporter
+│  ├─ version.py           # Resolves __version__ from the VERSION file
 │  └─ main.py              # argparse, dispatch, crash log
 ├─ gui/                    # PySide6 widgets
 │  ├─ main_window.py       # QMainWindow + tabs + menu
@@ -29,6 +30,7 @@ A workflow tool for flashing Baofeng / Radtel handheld radios via CHIRP drivers.
 ├─ settings_profile.json   # Per-radio human-readable setting → CHIRP path map
 ├─ deprecated/             # Legacy stand-alone scripts; do NOT touch
 ├─ chirp/                  # kk7ds/chirp checkout — .gitignored, not ours
+├─ VERSION                 # Canonical version string — single source
 ├─ radijator.spec          # PyInstaller spec: builds both binaries
 ├─ pyproject.toml          # Black config
 ├─ .pre-commit-config.yaml # Black hook
@@ -120,15 +122,24 @@ Each concrete radio is a subclass of `RadijatorRadio` decorated with `@register_
 - `.github/workflows/user-manual.yml` compiles the Typst manual on changes to `user-manual/` and uploads the PDF.
 - Screenshots in `user-manual/assets/*.png` are tracked via Git LFS — `git lfs install` once per clone.
 
+### Releasing
+
+1. Edit `VERSION`. It is the single source for the CLI `--version`, the GUI window title and About box, and the manual title page.
+2. Commit: `chore: bump version to X.Y.Z`
+3. Tag `vX.Y.Z` and push the tag.
+
+`.github/workflows/release.yml` runs a `check-version` job first and refuses the release if the tag does not match `VERSION`. `radijator.spec` bundles `VERSION` into both binaries; `cli/version.py` reads it from `sys._MEIPASS` when frozen.
+
 ## User manual
 
 Typst sources under `user-manual/`. Build locally:
 
 ```sh
-typst compile --root user-manual user-manual/main.typ
+typst compile --root user-manual --input version="$(cat VERSION)" \
+  user-manual/main.typ
 ```
 
-The `--root user-manual` flag is required because section files reference `/assets/...` rooted at the manual directory.
+The `--root user-manual` flag is required because section files reference `/assets/...` rooted at the manual directory. `VERSION` sits outside that root, but the shell substitutes its value before Typst starts, so the sandbox is not an issue. Without `--input`, the title page renders `Version dev`.
 
 ## Memory system
 

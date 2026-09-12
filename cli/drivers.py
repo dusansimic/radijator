@@ -53,8 +53,7 @@ class _BaofengUV5RFamily(RadijatorRadio):
         if missing:
             raise RuntimeError(f"DTMF settings not found in radio settings: {missing}")
         log_fn(f"DTMF slot 1 set to {code}; sidetone set to DT+ANI")
-        self.radio.set_settings(self._settings)
-        self._settings = self.radio.get_settings()
+        self._push_settings(log_fn=log_fn)
 
     def _apply_memory_extras(self, chirp_mem: Memory, rad_mem: RadijatorMemory):
         if not rad_mem.ptt_id:
@@ -91,8 +90,7 @@ class _BaofengUV5RFamily(RadijatorRadio):
                 f"power-on message settings not found in radio settings: {missing}"
             )
         log_fn(f"Power-on message: {line1!r} / {line2!r}")
-        self.radio.set_settings(self._settings)
-        self._settings = self.radio.get_settings()
+        self._push_settings(log_fn=log_fn)
 
 
 @register_radio
@@ -182,8 +180,7 @@ class _BaofengUV17ProFamily(RadijatorRadio):
         if missing:
             raise RuntimeError(f"DTMF settings not found in radio settings: {missing}")
         log_fn(f"DTMF slot 1 set to {code}; sidetone set to {self.SIDETONE_VALUE}")
-        self.radio.set_settings(self._settings)
-        self._settings = self.radio.get_settings()
+        self._push_settings(log_fn=log_fn)
 
     def set_power_on_message(self, line1: str, line2: str, log_fn=print):
         pass

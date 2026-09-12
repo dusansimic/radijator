@@ -5,10 +5,42 @@ import time
 from typing import Iterable
 
 from chirp.chirp_common import Memory, PowerLevel, Radio
-from chirp.settings import RadioSettings
+from chirp.settings import RadioSetting, RadioSettingGroup, RadioSettings
 from chirp.wxui.serialtrace import SerialTrace
 
 from .memory import RadijatorMemory
+
+
+def _prune_uninitialized(settings: RadioSettings) -> list:
+    """Drop settings whose stored value failed the driver's validation.
+
+    CHIRP leaves such a value uninitialized (``get_value()`` returns None).
+    Drivers with hand-written ``set_settings`` write every element back
+    unconditionally and blow up on ``int(None)``, so they never reach the
+    settings we actually care about.
+    """
+    skipped = []
+
+    def _remove(container, element):
+        if isinstance(container, RadioSettings):
+            container.remove(element)
+        else:
+            del container[element]
+
+    def _prune(container):
+        for element in list(container):
+            if isinstance(element, RadioSetting):
+                values = element.value
+                if not isinstance(values, list):
+                    values = [values]
+                if any(not value.initialized for value in values):
+                    skipped.append(element.get_name())
+                    _remove(container, element)
+            elif isinstance(element, RadioSettingGroup):
+                _prune(element)
+
+    _prune(settings)
+    return skipped
 
 
 class RadijatorRadio:
@@ -76,6 +108,16 @@ class RadijatorRadio:
             self._progress_fn = None
         self._close_serial(pipe)
 
+    def _push_settings(self, log_fn=print):
+        skipped = _prune_uninitialized(self._settings)
+        if skipped:
+            log_fn(
+                f"Skipping {len(skipped)} setting(s) the radio reports "
+                f"out of range: {', '.join(skipped)}"
+            )
+        self.radio.set_settings(self._settings)
+        self._settings = self.radio.get_settings()
+
     def _transpose_settings_profile(self, profile_file_name: str) -> dict:
         with open(profile_file_name, "r", encoding="utf-8") as f:
             profile = json.load(f)
@@ -120,8 +162,7 @@ class RadijatorRadio:
                     )
                 setting.__setitem__(0, profile_setting["value"])
 
-        self.radio.set_settings(settings)
-        self._settings = self.radio.get_settings()
+        self._push_settings(log_fn=log_fn)
 
     def print_settings(self, log_fn=print):
         settings = self._settings

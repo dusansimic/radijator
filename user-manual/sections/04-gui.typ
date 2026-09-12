@@ -17,7 +17,7 @@ From source:
 python radijator_gui.py
 ```
 
-The window title shows the running version, e.g. `Radijator 1.0.0`.
+The window title shows the program name followed by the running version.
 
 == Main window layout
 

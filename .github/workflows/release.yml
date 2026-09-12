@@ -6,8 +6,27 @@ on:
       - 'v*'
 
 jobs:
+  check-version:
+    name: Check VERSION matches tag
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+
+    - name: Verify VERSION matches tag
+      run: |
+        TAG="${GITHUB_REF#refs/tags/}"
+        FILE="v$(tr -d '[:space:]' < VERSION)"
+        if [ "$TAG" != "$FILE" ]; then
+          echo "::error::tag $TAG does not match VERSION file ($FILE)"
+          exit 1
+        fi
+        echo "VERSION $FILE matches tag $TAG"
+
   build-binaries:
     name: Build on ${{ matrix.pretty-name }}
+    needs: check-version
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -94,6 +113,7 @@ jobs:
 
   build-manual:
     name: Compile user manual
+    needs: check-version
     runs-on: ubuntu-latest
 
     steps:
@@ -106,7 +126,9 @@ jobs:
       uses: typst-community/setup-typst@v5
 
     - name: Compile user manual
-      run: typst compile --root user-manual user-manual/main.typ radijator-manual.pdf
+      run: |
+        typst compile --root user-manual --input version="$(cat VERSION)" \
+          user-manual/main.typ radijator-manual.pdf
 
     - name: Upload PDF artifact
       uses: actions/upload-artifact@v6

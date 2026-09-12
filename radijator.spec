@@ -6,13 +6,14 @@ chirp_hidden = [
     m for m in collect_submodules('chirp') if not m.startswith('chirp.wxui')
 ] + ['chirp.wxui.serialtrace']
 chirp_data = collect_data_files('chirp')
+version_data = [('VERSION', '.')]
 
 
 cli_a = Analysis(
     ['radijator.py'],
     pathex=[],
     binaries=[],
-    datas=chirp_data,
+    datas=chirp_data + version_data,
     hiddenimports=chirp_hidden,
     hookspath=[],
     hooksconfig={},
@@ -49,7 +50,7 @@ gui_a = Analysis(
     ['radijator_gui.py'],
     pathex=[],
     binaries=[],
-    datas=chirp_data,
+    datas=chirp_data + version_data,
     hiddenimports=chirp_hidden,
     hookspath=[],
     hooksconfig={},

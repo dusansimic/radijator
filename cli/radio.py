@@ -11,6 +11,13 @@ from chirp.wxui.serialtrace import SerialTrace
 from .memory import RadijatorMemory
 
 
+def _json_safe(value):
+    """Coerce a CHIRP setting value into something json.dump can write."""
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value
+    return str(value)
+
+
 def _prune_uninitialized(settings: RadioSettings) -> list:
     """Drop settings whose stored value failed the driver's validation.
 
@@ -170,6 +177,48 @@ class RadijatorRadio:
         settings_generator = settings.walk()
         for setting in settings_generator:
             log_fn(f"{setting.get_name()}: {setting.value}")
+
+    def dump_settings_profile(self, profile_file_name: str, log_fn=print) -> dict:
+        """Snapshot the device's current values for the settings named in the
+        master profile schema, in settings_profile.json shape for this model."""
+        transposed = self._transpose_settings_profile(profile_file_name)
+
+        current = {}
+        for setting in self._settings.walk():
+            try:
+                current[setting.get_name()] = _json_safe(setting[0].get_value())
+            except (IndexError, AttributeError):
+                continue
+
+        out = {}
+        for chirp_name, entry in transposed.items():
+            if chirp_name in current:
+                out[entry["pretty_name"]] = {
+                    self.RADIJATOR_SETTINGS_PROFILE_ID: {
+                        "name": chirp_name,
+                        "value": current[chirp_name],
+                    }
+                }
+            else:
+                log_fn(
+                    f"Setting {entry['pretty_name']} ({chirp_name}) not present "
+                    f"on radio; skipping"
+                )
+        log_fn(f"Read {len(out)} profile setting(s) from radio")
+        return out
+
+    def dump_memories(self, log_fn=print, progress_fn=None) -> list:
+        """Read non-empty channels off the device into memories JSON shape."""
+        out = []
+        total = len(self.MEMORY_RANGE)
+        for step, i in enumerate(self.MEMORY_RANGE, start=1):
+            mem = self.radio.get_memory(i)
+            if not mem.empty:
+                out.append(RadijatorMemory.from_chirp_memory(mem).to_json())
+            if progress_fn:
+                progress_fn(step, total, "Reading memories")
+        log_fn(f"Read {len(out)} non-empty memory channel(s) from radio")
+        return out
 
     def _clear_memories(self, progress_fn=None):
         total = len(self.MEMORY_RANGE)

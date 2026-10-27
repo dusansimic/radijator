@@ -15,7 +15,13 @@ import radijator
 
 from .convert_tab import ConvertTab
 from .dtmf_tab import DtmfTab
-from .program_tab import ProgramTab
+from .program_tab import (
+    DOWNLOAD_MODES,
+    MEMORY_MODES,
+    PROFILE_MODES,
+    UPLOAD_MODES,
+    ProgramTab,
+)
 from .worker import Worker
 
 
@@ -30,6 +36,7 @@ class MainWindow(QMainWindow):
         self.dtmf_tab = DtmfTab()
         self.program_tab.run_requested.connect(self._run_program)
         self.convert_tab.run_requested.connect(self._run_convert)
+        self.dtmf_tab.csv_changed.connect(self._sync_taken_dtmf_codes)
 
         self.tabs = QTabWidget()
         self.tabs.addTab(self.program_tab, "Program")
@@ -137,11 +144,25 @@ class MainWindow(QMainWindow):
         elif not checked and idx != -1:
             self.tabs.removeTab(idx)
         self.program_tab.set_dtmf_visible(checked)
+        if checked:
+            self._sync_taken_dtmf_codes()
         if checked and not self.program_tab.dtmf_code():
             last = self.dtmf_tab.last_code()
             self.program_tab.set_dtmf_code(
-                radijator._next_dtmf_code(last) if last else "*001#"
+                self._next_free_dtmf_code(last) if last else "*001#"
             )
+
+    def _sync_taken_dtmf_codes(self):
+        self.program_tab.set_taken_dtmf_codes(self.dtmf_tab.existing_codes())
+
+    def _next_free_dtmf_code(self, last: str) -> str:
+        taken = self.dtmf_tab.existing_codes()
+        nxt = radijator._next_dtmf_code(last)
+        for _ in range(1000):
+            if nxt not in taken:
+                return nxt
+            nxt = radijator._next_dtmf_code(nxt)
+        return nxt
 
     def _start_worker(self, target, kwargs, with_progress: bool):
         if self._worker and self._worker.isRunning():
@@ -167,15 +188,20 @@ class MainWindow(QMainWindow):
         self.program_tab.set_running(False)
         self.convert_tab.set_running(False)
         self.dtmf_tab.set_running(False)
-        if ok and self.dtmf_action.isChecked():
+        if (
+            ok
+            and self.dtmf_action.isChecked()
+            and self.program_tab.current_mode() in UPLOAD_MODES
+        ):
             self.dtmf_tab.refresh_table()
             last = self.dtmf_tab.last_code()
             if last:
-                self.program_tab.set_dtmf_code(radijator._next_dtmf_code(last))
+                self.program_tab.set_dtmf_code(self._next_free_dtmf_code(last))
             self.program_tab.clear_dtmf_nickname()
 
     def _run_program(self, kwargs: dict):
-        if self.dtmf_action.isChecked():
+        mode = kwargs.get("mode")
+        if mode in UPLOAD_MODES and self.dtmf_action.isChecked():
             csv_path = self.dtmf_tab.csv_path()
             code = self.program_tab.dtmf_code()
             nickname = self.program_tab.dtmf_nickname()
@@ -190,6 +216,15 @@ class MainWindow(QMainWindow):
             if not radijator.DTMF_CODE_RE.match(code):
                 QMessageBox.warning(
                     self, "Missing input", "DTMF code must match *ddd#."
+                )
+                return
+            self._sync_taken_dtmf_codes()
+            if code in self.dtmf_tab.existing_codes():
+                QMessageBox.warning(
+                    self,
+                    "Duplicate DTMF code",
+                    f"{code} is already assigned in the DTMF log. "
+                    "Choose a different code.",
                 )
                 return
             kwargs = {
@@ -230,12 +265,15 @@ class MainWindow(QMainWindow):
         if not kwargs.get("radio_model"):
             return "Radio model is required."
         mode = kwargs.get("mode")
-        if mode in ("load-profile", "load-profile-and-memory") and not kwargs.get(
-            "profile"
-        ):
-            return "Profile JSON is required for this operation."
-        if mode in ("load-memory", "load-profile-and-memory") and not kwargs.get(
-            "memory_paths"
-        ):
+        if mode in PROFILE_MODES and not kwargs.get("profile"):
+            hint = (
+                "Select the master settings profile JSON to snapshot."
+                if mode == "download-profile"
+                else "Profile JSON is required for this operation."
+            )
+            return hint
+        if mode in MEMORY_MODES and not kwargs.get("memory_paths"):
             return "At least one memory JSON file is required for this operation."
+        if mode in DOWNLOAD_MODES and not kwargs.get("output_path"):
+            return "An output file path is required for this operation."
         return ""

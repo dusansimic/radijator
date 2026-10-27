@@ -1,6 +1,7 @@
 import csv
 import os
 
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QFileDialog,
@@ -20,6 +21,8 @@ import radijator
 
 
 class DtmfTab(QWidget):
+    csv_changed = Signal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -81,6 +84,7 @@ class DtmfTab(QWidget):
         path = self.csv_edit.text()
         self.table.setRowCount(0)
         if not path or not os.path.exists(path) or os.path.getsize(path) == 0:
+            self.csv_changed.emit()
             return
         try:
             with open(path, "r", newline="", encoding="utf-8") as f:
@@ -97,6 +101,15 @@ class DtmfTab(QWidget):
             nick = row[1] if len(row) > 1 else ""
             self.table.setItem(r, 0, QTableWidgetItem(code))
             self.table.setItem(r, 1, QTableWidgetItem(nick))
+        self.csv_changed.emit()
+
+    def existing_codes(self) -> set:
+        codes = set()
+        for r in range(self.table.rowCount()):
+            item = self.table.item(r, 0)
+            if item and radijator.DTMF_CODE_RE.match(item.text().strip()):
+                codes.add(item.text().strip())
+        return codes
 
     def csv_path(self) -> str:
         return self.csv_edit.text().strip()

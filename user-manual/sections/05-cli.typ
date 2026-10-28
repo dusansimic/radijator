@@ -8,11 +8,11 @@ radijator [--version] [-h] {program,convert,random-dcs} ...
 
 - `--version` — print version and exit.
 - `-h`, `--help` — short usage summary. Works on every subcommand too
-  (`radijator program -h`, `radijator program load-memory -h`, ...).
+  (`radijator program -h`, `radijator program upload-memory -h`, ...).
 
 == `program` subcommand
 
-Writes to the radio. General shape:
+Reads from or writes to the radio. General shape:
 
 ```
 radijator program -R <model> -p <port> [--verbose] <mode> [mode-args]
@@ -45,13 +45,17 @@ radijator program -R <model> -p <port> [--verbose] <mode> [mode-args]
     `--dtmf-nickname`.],
 )
 
+The DTMF flags apply only to the `upload-*` modes. With any other mode
+the run stops with an error. The run also stops before it touches the
+radio if the code is already in the CSV log.
+
 A combined example flashing memories and logging the DTMF code:
 
 ```sh
 radijator program -R uv5r -p /dev/ttyUSB0 \
   --dtmf-code "*042#" --dtmf-nickname "alice" \
   --dtmf-csv dtmf.csv \
-  load-memory -M memories/pmr.json
+  upload-memory -M memories/pmr.json
 ```
 
 The row `*042#,alice` is appended to `dtmf.csv` only if the flash
@@ -85,24 +89,64 @@ Does not write.
 radijator program -R uv5r -p /dev/ttyUSB0 print-settings
 ```
 
-=== Mode: `load-profile`
+=== Mode: `download-profile`
+
+Reads the settings from the radio and writes them to a profile JSON
+file. Does not write to the radio.
+
+```sh
+radijator program -R uv5r -p /dev/ttyUSB0 download-profile \
+  -P settings_profile.json -o my-uv5r.json
+```
+
+- `-P`, `--profile` — required, the master settings profile. It
+  tells Radijator which settings to read. Only the settings that the
+  master defines for this model are written.
+- `-o`, `--output` — required, destination JSON path. Overwrites if
+  it exists. It must not be the same file as `-P`: the output holds
+  only this model's entries, so it would remove all other models from
+  the master.
+
+The output has the same shape as `settings_profile.json`, so you can
+give it to `upload-profile` later. A setting that the radio reports
+as out of range is not written; the log shows a line for each one.
+
+=== Mode: `upload-profile`
 
 Applies a settings profile JSON and writes the result back.
 
 ```sh
-radijator program -R uv5r -p /dev/ttyUSB0 load-profile \
+radijator program -R uv5r -p /dev/ttyUSB0 upload-profile \
   -P settings_profile.json
 ```
 
 - `-P`, `--profile` — required, path to the settings profile JSON.
 
-=== Mode: `load-memory`
+=== Mode: `download-memory`
+
+Reads all non-empty channels from the radio and writes them to a
+memory JSON file. Does not write to the radio.
+
+```sh
+radijator program -R uv5r -p /dev/ttyUSB0 download-memory \
+  -o my-channels.json
+```
+
+- `-o`, `--output` — required, destination JSON path. Overwrites if
+  it exists.
+
+The output has the memory JSON shape, so you can give it to
+`upload-memory` or `convert` later. The file does not contain the
+power level: on upload, every channel gets the model's default power
+level, the same as for a hand-written file.
+
+=== Mode: `upload-memory`
 
 Clears all memories on the radio and writes the channels from one or
 more memory JSON files.
 
 ```sh
-radijator program -R uv5r -p /dev/ttyUSB0 load-memory \
+radijator program -R uv5r -p /dev/ttyUSB0 upload-memory \
   -M memories/pmr.json
 ```
 
@@ -110,21 +154,27 @@ radijator program -R uv5r -p /dev/ttyUSB0 load-memory \
   flag to concatenate multiple files in order:
 
 ```sh
-radijator program -R rt470x -p /dev/ttyUSB0 load-memory \
+radijator program -R rt470x -p /dev/ttyUSB0 upload-memory \
   -M memories/pmr.json \
   -M memories/repeaters.json
 ```
 
-=== Mode: `load-profile-and-memory`
+=== Mode: `upload-profile-and-memory`
 
-Both `load-profile` and `load-memory` in a single pass (settings
+Both `upload-profile` and `upload-memory` in a single pass (settings
 first, then memories). Combines their flags:
 
 ```sh
-radijator program -R uv5r -p /dev/ttyUSB0 load-profile-and-memory \
+radijator program -R uv5r -p /dev/ttyUSB0 upload-profile-and-memory \
   -P settings_profile.json \
   -M memories/pmr.json
 ```
+
+=== Legacy mode names
+
+Releases before 1.2.0 used `load-profile`, `load-memory` and
+`load-profile-and-memory`. These names still work as aliases of the
+matching `upload-*` modes.
 
 == `convert` subcommand
 
@@ -143,7 +193,7 @@ radijator convert -M memories/pmr.json -M memories/repeaters.json all.csv
   exists.
 
 *Breaking change*: previous releases used `-i/--input` and
-`-o/--output`. The flag names mirror `program load-memory -M` now
+`-o/--output`. The flag names mirror `program upload-memory -M` now
 and the output is a positional argument. Migrate scripts
 accordingly.
 

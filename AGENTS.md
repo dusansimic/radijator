@@ -13,7 +13,7 @@ A workflow tool for flashing Baofeng / Radtel handheld radios via CHIRP drivers.
 │  ├─ radio.py             # RadijatorRadio base + register_radio + registry
 │  ├─ drivers.py           # Concrete driver subclasses (UV-5R, RT-470, …)
 │  ├─ dtmf.py              # DTMF helpers (regex, CSV append, next code)
-│  ├─ program.py           # run_program() — download → mutate → upload
+│  ├─ program.py           # run_program() — download → mutate → upload, or radio → JSON
 │  ├─ convert.py           # run_convert() — JSON memory → CHIRP CSV
 │  ├─ random_dcs.py        # random-dcs helper
 │  ├─ progress.py          # Rich Live + Progress + Status reporter
@@ -93,6 +93,16 @@ Each concrete radio is a subclass of `RadijatorRadio` decorated with `@register_
 
 `settings_profile.json` maps a *human-readable* setting name → per-model `{name: CHIRP setting path, value: …}`. `RadijatorRadio._transpose_settings_profile` filters to the active `RADIJATOR_SETTINGS_PROFILE_ID` and applies the values during `set_settings_profile`. GUI / CLI can override individual values via the `profile_overrides` dict (used by the DTMF feature to override power-on message).
 
+`RadijatorRadio.dump_settings_profile` is the inverse: it uses the same master profile as a schema and writes the radio's current values in the same shape, but with only the active model's key. Settings the radio reports as uninitialized are left out, because a `null` value would crash `set_settings_profile` on upload. `run_program` refuses a `download-profile` whose output is the master file.
+
+### Program modes
+
+Canonical modes are `print-settings`, `download-profile`, `download-memory`, `upload-profile`, `upload-memory`, `upload-profile-and-memory`. The pre-1.2.0 `load-*` names are argparse `aliases=` and are mapped to `upload-*` by `MODE_ALIASES` at the top of `run_program`, so code below that line only sees canonical names. The GUI's mode tuples in `gui/program_tab.py` mirror the ones in `cli/program.py`; keep them in sync. Download modes skip the reset wait and never call `upload_fw`. DTMF options are rejected for non-upload modes, and `run_program` refuses a code that is already in the DTMF CSV (the GUI also checks this before the run).
+
+### Memory extras
+
+`_apply_memory_extras` (upload) and `_read_memory_extras` (download) are a pair. If a driver writes a `Memory.extra` entry, it must also read it back, or `download-memory` → `upload-memory` loses it. Power level is not in the memory JSON; uploads always use `DEFAULT_POWER_LEVEL`.
+
 ## Gotchas
 
 - **`chirp.wxui.serialtrace` hijacks stdout/stderr** at import time, routing them into `~/.chirp/debug.log`. The prelude in `radijator.py` saves and restores `sys.stdout` / `sys.stderr` around the import. Do not move this block — it must run before any chirp driver code touches stdio.
@@ -112,7 +122,7 @@ Each concrete radio is a subclass of `RadijatorRadio` decorated with `@register_
        RESET_TIME = 5  # seconds; check the driver's clone timing
    ```
 3. Add per-model entries to `settings_profile.json` under the `RADIJATOR_SETTINGS_PROFILE_ID` you chose.
-4. If the radio needs custom DTMF / power-on-message / memory-extras handling, override `set_dtmf_code`, `set_power_on_message`, `_apply_memory_extras`. The UV-5R class in `cli/drivers.py` is the worked example.
+4. If the radio needs custom DTMF / power-on-message / memory-extras handling, override `set_dtmf_code`, `set_power_on_message`, `_apply_memory_extras` and `_read_memory_extras`. The UV-5R class in `cli/drivers.py` is the worked example.
 5. Document the model in `user-manual/sections/07-radio-notes.typ`.
 
 ## Build & CI
@@ -149,4 +159,4 @@ Long-term project context lives under `~/.claude/projects/.../memory/`. The auto
 
 - Not a CHIRP fork. We wrap CHIRP drivers; never modify `chirp/`.
 - Not a general-purpose radio programmer. Scope is fixed: Baofeng / Radtel families used by the operator.
-- Not a CHIRP CSV editor. `convert` is one-way (JSON → CHIRP CSV); no round-trip.
+- Not a CHIRP CSV editor. `convert` is one-way (JSON → CHIRP CSV); no round-trip. The radio → JSON path is `program download-*`, not `convert`.

@@ -59,11 +59,11 @@ pane more room.
 #screenshot(
   "/assets/program-tab-load-profile-and-memory.png",
   [Program tab configured for a
-    #raw("load-profile-and-memory") run: model, port, operation,
+    #raw("upload-profile-and-memory") run: model, port, operation,
     profile, and two memory files queued in order.],
 )
 
-All radio-writing operations live here. The fields, top to bottom:
+All radio operations live here. The fields, top to bottom:
 
 === Radio model
 
@@ -88,7 +88,7 @@ on, since `COM*` names don't follow the `ttyUSB` pattern.
 
 === Operation
 
-Four modes. Radijator enables only the input groups relevant to each:
+Six modes. Radijator enables only the input groups relevant to each:
 
 #table(
   columns: (auto, 1fr),
@@ -98,15 +98,26 @@ Four modes. Radijator enables only the input groups relevant to each:
     [Read current settings from the radio and print them to the log.
     No write. Good first step to confirm the cable and model selection
     work.],
-  [*Load profile*],
+  [*Download profile*],
+    [Read the settings that the *settings profile JSON* names for this
+    model and write their current values to the *Output file*. No
+    write to the radio.],
+  [*Upload profile*],
     [Read current state, apply the named settings from a *settings
     profile JSON*, and write back.],
-  [*Load memory*],
+  [*Download memory*],
+    [Read all non-empty channels and write them to the *Output file*
+    as memory JSON. No write to the radio.],
+  [*Upload memory*],
     [Read current state, clear all memory channels, write the channels
     from one or more *memory JSON* files, and write back.],
-  [*Load profile and memory*],
-    [Both of the above in one pass — settings first, then memories.],
+  [*Upload profile + memory*],
+    [*Upload profile* and *Upload memory* in one pass — settings
+    first, then memories.],
 )
+
+The two download modes make files that the upload modes accept, so you
+can copy the setup of one radio to another radio of the same model.
 
 === Verbose
 
@@ -117,13 +128,25 @@ for routine runs.
 
 === Settings profile
 
-Enabled only in *Load profile* and *Load profile and memory* modes.
-Type a path or use *Browse...* to pick a JSON file. See the
-*File formats* section for the schema.
+Enabled only in *Download profile*, *Upload profile* and *Upload
+profile + memory* modes. Type a path or use *Browse...* to pick a JSON
+file. See the *File formats* section for the schema.
+
+In *Download profile* mode the group is titled *Profile (schema to
+snapshot)*. The file tells Radijator which settings to read; it is not
+changed.
+
+=== Output file
+
+Visible only in the two download modes. Type a path or use
+*Browse...* to pick the destination JSON file. An existing file is
+overwritten. For *Download profile*, the output must not be the same
+file as the settings profile.
 
 === Memory files
 
-Enabled only in *Load memory* and *Load profile and memory* modes.
+Used by *Upload memory* and *Upload profile + memory* modes. The list
+stays editable in every mode because the *Convert* tab also uses it.
 
 - *Add...* — opens a multi-select file dialog. Selected files are
   appended to the list.
@@ -137,22 +160,28 @@ Enabled only in *Load memory* and *Load profile and memory* modes.
 Visible only when *Options → Configure DTMF code* is checked. Two
 fields:
 
-- *Code* — must match `*ddd#` (asterisk, three digits, hash). The
-  field rejects anything else. Seeded automatically with the next
-  sequential value after the last entry in the selected CSV log; if
-  the CSV is empty or unselected, seeded with `*001#`.
+- *Code* — must match `*ddd#` (asterisk, three digits, hash). You can
+  edit the field freely; the format is checked when you click *Run*.
+  Seeded automatically with the next free value after the last entry
+  in the selected CSV log; if the CSV is empty or unselected, seeded
+  with `*001#`. If the code is already in the log, the field turns
+  red, a warning shows below it, and *Run* is refused.
 - *Nickname* — free-text label written alongside the code.
 
 The CSV file these rows append to is selected on the *DTMF* tab. The
 row is appended only after a successful *Run*; the code field auto-
 bumps to the next sequential value (`*041#` → `*042#`, wrapping at
-`*999#` to `*000#`) and the nickname clears.
+`*999#` to `*000#`), skipping codes already in the log, and the
+nickname clears.
+
+DTMF codes are written only in the upload modes. *Print settings* and
+the download modes ignore the DTMF fields.
 
 === Run
 
 Executes the current operation. Disabled during a run. A dialog pops
 up if required inputs are missing (e.g. a memory file for *Load
-memory* mode).
+memory* mode). The *Operation* dropdown is locked during a run.
 
 == Convert tab
 
@@ -205,7 +234,7 @@ place as the other run inputs. See *Program tab → DTMF code* below.
     phase.],
 )
 
-A typical `load-profile-and-memory` run looks like this:
+A typical `upload-profile-and-memory` run looks like this:
 
 ```
 Downloading settings from radio...

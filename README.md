@@ -23,8 +23,10 @@ Built on the battle-tested [CHIRP](https://chirpmyradio.com/) driver suite — R
 | `rt470` | Radtel RT-470 |
 | `rt470x` | Radtel RT-470X |
 | `rt900bt` | Radtel RT-900BT |
+| `uv9r` | Baofeng UV-9R |
+| `uv9rpro` | Baofeng UV-9R Pro |
 
-(UV-9R and K5 Plus drivers are present but not registered — see TODOs in [cli/drivers.py](cli/drivers.py).)
+(The K5 Plus driver is present but not registered — see TODOs in [cli/drivers.py](cli/drivers.py).)
 
 ## Quick start (end users)
 

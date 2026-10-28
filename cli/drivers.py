@@ -127,7 +127,6 @@ class RadijatorUV6R(_BaofengUV5RFamily):
     PONMSG_SETTING_NAME = "settings.ponmsg"
 
 
-# TODO: Add to profile
 @register_radio
 class RadijatorUV9R(_BaofengUV5RFamily):
     DRIVER_CLASS = UV9R
@@ -138,7 +137,6 @@ class RadijatorUV9R(_BaofengUV5RFamily):
 
 
 # UV-9R Pro shares the BF-A58 driver in CHIRP (it's an Alias of BFA58).
-# TODO: Add to profile
 @register_radio
 class RadijatorUV9RPro(_BaofengUV5RFamily):
     DRIVER_CLASS = BFA58

@@ -15,6 +15,14 @@
     "rt470x": {
       "name": "sql",
       "value": 1
+    },
+    "uv9r": {
+      "name": "settings.squelch",
+      "value": "1"
+    },
+    "uv9rpro": {
+      "name": "settings.squelch",
+      "value": "1"
     }
   },
   "Power Save": {
@@ -33,6 +41,14 @@
     "rt470x": {
       "name": "save",
       "value": "Deep"
+    },
+    "uv9r": {
+      "name": "settings.save",
+      "value": "1:4"
+    },
+    "uv9rpro": {
+      "name": "settings.save",
+      "value": "1:4"
     }
   },
   "Screen On Time": {
@@ -51,6 +67,14 @@
     "rt470x": {
       "name": "abr",
       "value": "5 seconds"
+    },
+    "uv9r": {
+      "name": "settings.abr",
+      "value": "5"
+    },
+    "uv9rpro": {
+      "name": "settings.abr",
+      "value": "5"
     }
   },
   "Dual Watch": {
@@ -69,11 +93,27 @@
     "rt470x": {
       "name": "tdr",
       "value": true
+    },
+    "uv9r": {
+      "name": "settings.tdr",
+      "value": true
+    },
+    "uv9rpro": {
+      "name": "settings.tdr",
+      "value": true
     }
   },
   "Dual Watch Priority": {
     "uv5r": {
       "name": "tdrab",
+      "value": "Off"
+    },
+    "uv9r": {
+      "name": "settings.tdrab",
+      "value": "Off"
+    },
+    "uv9rpro": {
+      "name": "settings.tdrab",
       "value": "Off"
     }
   },
@@ -93,6 +133,14 @@
     "rt470x": {
       "name": "almode",
       "value": "Site"
+    },
+    "uv9r": {
+      "name": "settings.almod",
+      "value": "Site"
+    },
+    "uv9rpro": {
+      "name": "settings.almod",
+      "value": "Site"
     }
   },
   "Voice Prompt": {
@@ -111,6 +159,14 @@
     "rt470x": {
       "name": "voice",
       "value": false
+    },
+    "uv9r": {
+      "name": "settings.voice",
+      "value": "Off"
+    },
+    "uv9rpro": {
+      "name": "settings.voice",
+      "value": "Off"
     }
   },
   "Beep": {
@@ -128,6 +184,14 @@
     },
     "rt470x": {
       "name": "beep",
+      "value": false
+    },
+    "uv9r": {
+      "name": "settings.beep",
+      "value": false
+    },
+    "uv9rpro": {
+      "name": "settings.beep",
       "value": false
     }
   },
@@ -147,6 +211,14 @@
     "rt470x": {
       "name": "tot",
       "value": "30 seconds"
+    },
+    "uv9r": {
+      "name": "settings.timeout",
+      "value": "15 sec"
+    },
+    "uv9rpro": {
+      "name": "settings.timeout",
+      "value": "15 sec"
     }
   },
   "Display mode A": {
@@ -165,6 +237,14 @@
     "rt470x": {
       "name": "mdfa",
       "value": "Name"
+    },
+    "uv9r": {
+      "name": "settings.mdfa",
+      "value": "Name"
+    },
+    "uv9rpro": {
+      "name": "settings.mdfa",
+      "value": "Name"
     }
   },
   "Display mode B": {
@@ -182,6 +262,14 @@
     },
     "rt470x": {
       "name": "mdfb",
+      "value": "Name"
+    },
+    "uv9r": {
+      "name": "settings.mdfb",
+      "value": "Name"
+    },
+    "uv9rpro": {
+      "name": "settings.mdfb",
       "value": "Name"
     }
   },
@@ -207,6 +295,14 @@
     "rt470x": {
       "name": "autolk",
       "value": "Off"
+    },
+    "uv9r": {
+      "name": "settings.autolk",
+      "value": false
+    },
+    "uv9rpro": {
+      "name": "settings.autolk",
+      "value": false
     }
   },
   "FM radio": {
@@ -224,6 +320,14 @@
     },
     "rt470x": {
       "name": "fmradio",
+      "value": false
+    },
+    "uv9r": {
+      "name": "settings.fmradio",
+      "value": false
+    },
+    "uv9rpro": {
+      "name": "settings.fmradio",
       "value": false
     }
   },
@@ -247,6 +351,14 @@
     "rt470x": {
       "name": "roger",
       "value": "OFF"
+    },
+    "uv9r": {
+      "name": "settings.roger",
+      "value": false
+    },
+    "uv9rpro": {
+      "name": "settings.roger",
+      "value": false
     }
   },
   "Rogger Beep (RX)": {
@@ -267,6 +379,14 @@
     "rt470x": {
       "name": "ste",
       "value": false
+    },
+    "uv9r": {
+      "name": "settings.ste",
+      "value": false
+    },
+    "uv9rpro": {
+      "name": "settings.ste",
+      "value": false
     }
   },
   "Squelch Tail Eliminate (repeater)": {
@@ -284,6 +404,14 @@
     },
     "rt470x": {
       "name": "rpste",
+      "value": "Off"
+    },
+    "uv9r": {
+      "name": "settings.rpste",
+      "value": "Off"
+    },
+    "uv9rpro": {
+      "name": "settings.rpste",
       "value": "Off"
     }
   },
@@ -303,6 +431,14 @@
     "rt470x": {
       "name": "rptrl",
       "value": "Off"
+    },
+    "uv9r": {
+      "name": "settings.rptrl",
+      "value": "Off"
+    },
+    "uv9rpro": {
+      "name": "settings.rptrl",
+      "value": "Off"
     }
   },
   "RESET Menu": {
@@ -313,11 +449,27 @@
     "uv25": {
       "name": "settings.rstmenu",
       "value": true
+    },
+    "uv9r": {
+      "name": "settings.reset",
+      "value": true
+    },
+    "uv9rpro": {
+      "name": "settings.reset",
+      "value": true
     }
   },
   "All Menus": {
     "uv5r": {
       "name": "menu",
+      "value": true
+    },
+    "uv9r": {
+      "name": "settings.menu",
+      "value": true
+    },
+    "uv9rpro": {
+      "name": "settings.menu",
       "value": true
     }
   },
@@ -325,10 +477,26 @@
     "uv5r": {
       "name": "poweron_msg.line1",
       "value": "  UNS  "
+    },
+    "uv9r": {
+      "name": "poweron_msg.line1",
+      "value": "  UNS  "
+    },
+    "uv9rpro": {
+      "name": "poweron_msg.line1",
+      "value": "  UNS  "
     }
   },
   "Message Line 2": {
     "uv5r": {
+      "name": "poweron_msg.line2",
+      "value": "TEHNIKA"
+    },
+    "uv9r": {
+      "name": "poweron_msg.line2",
+      "value": "TEHNIKA"
+    },
+    "uv9rpro": {
       "name": "poweron_msg.line2",
       "value": "TEHNIKA"
     }
@@ -349,17 +517,41 @@
     "rt470x": {
       "name": "ponmsg",
       "value": "Logo"
+    },
+    "uv9r": {
+      "name": "settings.ponmsg",
+      "value": "Message"
+    },
+    "uv9rpro": {
+      "name": "settings.ponmsg",
+      "value": "Message"
     }
   },
   "Display Channel": {
     "uv5r": {
       "name": "displayab",
       "value": "A"
+    },
+    "uv9r": {
+      "name": "settings.displayab",
+      "value": "A"
+    },
+    "uv9rpro": {
+      "name": "settings.displayab",
+      "value": "A"
     }
   },
   "Work Mode": {
     "uv5r": {
       "name": "workmode",
+      "value": "Channel"
+    },
+    "uv9r": {
+      "name": "settings.workmode",
+      "value": "Channel"
+    },
+    "uv9rpro": {
+      "name": "settings.workmode",
       "value": "Channel"
     }
   },
@@ -395,10 +587,26 @@
     "uv5r": {
       "name": "wmchannel.mrcha",
       "value": 1
+    },
+    "uv9r": {
+      "name": "wmchannel.mrcha",
+      "value": 1
+    },
+    "uv9rpro": {
+      "name": "wmchannel.mrcha",
+      "value": 1
     }
   },
   "Default channel B": {
     "uv5r": {
+      "name": "wmchannel.mrchb",
+      "value": 1
+    },
+    "uv9r": {
+      "name": "wmchannel.mrchb",
+      "value": 1
+    },
+    "uv9rpro": {
       "name": "wmchannel.mrchb",
       "value": 1
     }
@@ -419,6 +627,14 @@
     "rt470x": {
       "name": "pttid",
       "value": "Off"
+    },
+    "uv9r": {
+      "name": "ani.aniid",
+      "value": "Off"
+    },
+    "uv9rpro": {
+      "name": "ani.aniid",
+      "value": "Off"
     }
   },
   "DTMF Sidetone": {
@@ -436,6 +652,14 @@
     },
     "rt470x": {
       "name": "dtmfst",
+      "value": "Off"
+    },
+    "uv9r": {
+      "name": "settings.dtmfst",
+      "value": "Off"
+    },
+    "uv9rpro": {
+      "name": "settings.dtmfst",
       "value": "Off"
     }
   },
@@ -455,6 +679,14 @@
     "rt470x": {
       "name": "dtmf.dtmfon",
       "value": "50 ms"
+    },
+    "uv9r": {
+      "name": "ani.dtmfon",
+      "value": "50 ms"
+    },
+    "uv9rpro": {
+      "name": "ani.dtmfon",
+      "value": "50 ms"
     }
   },
   "DTMF Off duration": {
@@ -472,6 +704,14 @@
     },
     "rt470x": {
       "name": "dtmf.dtmfoff",
+      "value": "50 ms"
+    },
+    "uv9r": {
+      "name": "ani.dtmfoff",
+      "value": "50 ms"
+    },
+    "uv9rpro": {
+      "name": "ani.dtmfoff",
       "value": "50 ms"
     }
   }

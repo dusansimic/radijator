@@ -16,7 +16,8 @@ and what appears in the GUI's *Radio model* dropdown.
   [`rt470`],   [Radtel RT-470],                     [✅],
   [`rt470x`],  [Radtel RT-470X],                    [✅],
   [`rt900bt`], [Radtel RT-900BT],                   [✅],
-  [`uv9r`],    [Baofeng UV-9R — experimental],      [no],
+  [`uv9r`],    [Baofeng UV-9R],                     [✅],
+  [`uv9rpro`], [Baofeng UV-9R Pro],                 [✅],
   [`k5plus`],  [Baofeng K5 Plus — experimental],    [no],
 )
 

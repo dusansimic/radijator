@@ -73,11 +73,21 @@ not covered by the default `settings_profile.json`; contribute a
 `uv6r` branch to the profile JSON if you need settings-profile
 support.
 
-=== Baofeng UV-9R
+=== Baofeng UV-9R and UV-9R Pro
 
-*Experimental.* The driver class exists but is not registered by
-default; enabling it requires a code change. The CHIRP driver for the
-WP970i family is known to be flaky on some UV-9R firmware revisions.
+Registered as `uv9r` and `uv9rpro`. Both use CHIRP's WP970i-family
+driver (`UV-9R` and `BF-A58`; CHIRP lists the UV-9R Pro as an alias of
+the BF-A58). Both models are covered by the default
+`settings_profile.json`.
+
+DTMF codes, per-memory PTT-ID and the power-on message work the same
+way as on the UV-5R (see above). The radio holds 128 channels with
+7-character names and has three power levels (High, Med, Low);
+Radijator programs channels at High.
+
+The CHIRP driver for the WP970i family is known to be flaky on some
+UV-9R firmware revisions. If `uv9r` fails to identify the radio, try
+`uv9rpro`.
 
 === Baofeng UV-25 / UV-17 Pro
 

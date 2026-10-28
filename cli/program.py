@@ -1,26 +1,23 @@
 """program subcommand: orchestrates download → modify → upload."""
 
 import json
+import os
 from typing import Iterable
 
-from .dtmf import DTMF_CODE_RE, _append_dtmf_row
+from .dtmf import DTMF_CODE_RE, _append_dtmf_row, _read_dtmf_codes
 from .memory import RadijatorMemory
 from .progress import cli_reporter
 from .radio import RADIO_MODEL_ID_CLASS_DICT, RadijatorRadio
 
-# Modes that apply the profile schema (upload path).
-_PROFILE_UPLOAD_MODES = ("load-profile", "upload-profile", "load-profile-and-memory")
-# Modes that write memory channels (upload path).
-_MEMORY_UPLOAD_MODES = ("load-memory", "upload-memory", "load-profile-and-memory")
-# Modes that clone the image back to the radio.
-_UPLOAD_MODES = (
-    "load-profile",
-    "load-memory",
-    "load-profile-and-memory",
-    "upload-profile",
-    "upload-memory",
-)
-# Modes that read the radio and write a JSON file instead of uploading.
+MODE_ALIASES = {
+    "load-profile": "upload-profile",
+    "load-memory": "upload-memory",
+    "load-profile-and-memory": "upload-profile-and-memory",
+}
+_PROFILE_MODES = ("download-profile", "upload-profile", "upload-profile-and-memory")
+_PROFILE_UPLOAD_MODES = ("upload-profile", "upload-profile-and-memory")
+_MEMORY_UPLOAD_MODES = ("upload-memory", "upload-profile-and-memory")
+_UPLOAD_MODES = ("upload-profile", "upload-memory", "upload-profile-and-memory")
 _DOWNLOAD_MODES = ("download-profile", "download-memory")
 
 
@@ -49,19 +46,26 @@ def run_program(
     """Core program workflow, usable by CLI and GUI.
 
     mode: one of "print-settings", "download-profile", "upload-profile",
-          "download-memory", "upload-memory", or the legacy aliases
-          "load-profile", "load-memory", "load-profile-and-memory".
+          "download-memory", "upload-memory", "upload-profile-and-memory",
+          or a legacy "load-*" alias from MODE_ALIASES.
 
     "download-*" reads the radio and writes a JSON file at output_path.
-    "upload-*" / "load-*" apply the given JSON to the radio and clone it back.
+    "upload-*" apply the given JSON to the radio and clone it back.
     download-profile reuses "profile" as the master schema to snapshot.
     """
-    if mode in _PROFILE_UPLOAD_MODES + ("download-profile",) and not profile:
+    mode = MODE_ALIASES.get(mode, mode)
+    if mode in _PROFILE_MODES and not profile:
         raise ValueError(f"profile is required for {mode}")
     if mode in _MEMORY_UPLOAD_MODES and not memory_paths:
         raise ValueError(f"memory_paths is required for {mode}")
     if mode in _DOWNLOAD_MODES and not output_path:
         raise ValueError(f"output_path is required for {mode}")
+    # The download holds only this model's entries; writing over the master
+    # would drop every other model's settings.
+    if mode == "download-profile" and os.path.realpath(output_path) == os.path.realpath(
+        profile
+    ):
+        raise ValueError("output_path must differ from the master profile")
 
     dtmf_active = any((dtmf_code, dtmf_nickname, dtmf_csv))
     if dtmf_active and not all((dtmf_code, dtmf_nickname, dtmf_csv)):
@@ -70,6 +74,10 @@ def run_program(
         )
     if dtmf_code is not None and not DTMF_CODE_RE.match(dtmf_code):
         raise ValueError(f"DTMF code must match *ddd# (got {dtmf_code!r})")
+    if dtmf_active and mode not in _UPLOAD_MODES:
+        raise ValueError(f"DTMF options only apply to upload modes, not {mode}")
+    if dtmf_active and dtmf_code in _read_dtmf_codes(dtmf_csv):
+        raise ValueError(f"DTMF code {dtmf_code} is already in {dtmf_csv}")
 
     radio: RadijatorRadio = RADIO_MODEL_ID_CLASS_DICT[radio_model](port)
 

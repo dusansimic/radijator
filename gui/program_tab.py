@@ -24,13 +24,13 @@ MODES = [
     ("upload-profile", "Upload profile (to device)"),
     ("download-memory", "Download memory (from device)"),
     ("upload-memory", "Upload memory (to device)"),
-    ("load-profile-and-memory", "Upload profile + memory (to device)"),
+    ("upload-profile-and-memory", "Upload profile + memory (to device)"),
 ]
 
-PROFILE_MODES = ("download-profile", "upload-profile", "load-profile-and-memory")
-MEMORY_MODES = ("upload-memory", "load-profile-and-memory")
+PROFILE_MODES = ("download-profile", "upload-profile", "upload-profile-and-memory")
+MEMORY_MODES = ("upload-memory", "upload-profile-and-memory")
 DOWNLOAD_MODES = ("download-profile", "download-memory")
-UPLOAD_MODES = ("upload-profile", "upload-memory", "load-profile-and-memory")
+UPLOAD_MODES = ("upload-profile", "upload-memory", "upload-profile-and-memory")
 
 
 class ProgramTab(QWidget):
@@ -127,7 +127,6 @@ class ProgramTab(QWidget):
         self.dtmf_box.setVisible(False)
 
         self._taken_dtmf_codes = set()
-        self._dtmf_duplicate = False
 
         self.memory_list = QListWidget()
         mem_add = QPushButton("Add...")
@@ -260,24 +259,22 @@ class ProgramTab(QWidget):
         self._taken_dtmf_codes = set(codes)
         self._check_dtmf_duplicate()
 
-    def dtmf_is_duplicate(self) -> bool:
-        return self._dtmf_duplicate
-
     def _check_dtmf_duplicate(self):
         code = self.dtmf_code_edit.text().strip()
-        self._dtmf_duplicate = (
+        duplicate = (
             bool(radijator.DTMF_CODE_RE.match(code)) and code in self._taken_dtmf_codes
         )
         self.dtmf_code_edit.setStyleSheet(
-            "background-color: #f5b7b1;" if self._dtmf_duplicate else ""
+            "background-color: #f5b7b1;" if duplicate else ""
         )
-        if self._dtmf_duplicate:
+        if duplicate:
             self.dtmf_warning.setText(
-                f"{code} is already assigned in the DTMF log — choose another."
+                f"{code} is already assigned in the DTMF log; choose another."
             )
-        self.dtmf_warning.setVisible(self._dtmf_duplicate)
+        self.dtmf_warning.setVisible(duplicate)
 
     def set_running(self, running: bool):
         self.run_btn.setEnabled(not running)
+        self.mode_combo.setEnabled(not running)
         self.dtmf_code_edit.setEnabled(not running)
         self.dtmf_nickname_edit.setEnabled(not running)

@@ -24,6 +24,17 @@ def _append_dtmf_row(csv_path: str, code: str, nickname: str, log_fn=print):
     log_fn(f"Logged DTMF {code} ({nickname}) to {csv_path}")
 
 
+def _read_dtmf_codes(csv_path: str) -> set:
+    if not os.path.exists(csv_path):
+        return set()
+    with open(csv_path, "r", newline="", encoding="utf-8") as f:
+        return {
+            row[0].strip()
+            for row in csv.reader(f)
+            if row and DTMF_CODE_RE.match(row[0].strip())
+        }
+
+
 def _next_dtmf_code(code: str) -> str:
     if not DTMF_CODE_RE.match(code):
         raise ValueError(f"bad DTMF code: {code!r}")

@@ -19,11 +19,18 @@ from serial.tools import list_ports
 import radijator
 
 MODES = [
-    ("print-settings", "Print settings"),
-    ("load-profile", "Load profile"),
-    ("load-memory", "Load memory"),
-    ("load-profile-and-memory", "Load profile and memory"),
+    ("print-settings", "Print settings (read)"),
+    ("download-profile", "Download profile (from device)"),
+    ("upload-profile", "Upload profile (to device)"),
+    ("download-memory", "Download memory (from device)"),
+    ("upload-memory", "Upload memory (to device)"),
+    ("upload-profile-and-memory", "Upload profile + memory (to device)"),
 ]
+
+PROFILE_MODES = ("download-profile", "upload-profile", "upload-profile-and-memory")
+MEMORY_MODES = ("upload-memory", "upload-profile-and-memory")
+DOWNLOAD_MODES = ("download-profile", "download-memory")
+UPLOAD_MODES = ("upload-profile", "upload-memory", "upload-profile-and-memory")
 
 
 class ProgramTab(QWidget):
@@ -71,6 +78,18 @@ class ProgramTab(QWidget):
         pb.addLayout(profile_row)
         self.profile_box = profile_box
 
+        self.output_edit = QLineEdit()
+        self.output_edit.setPlaceholderText("Destination JSON file")
+        output_browse = QPushButton("Browse...")
+        output_browse.clicked.connect(self._pick_output)
+        output_row = QHBoxLayout()
+        output_row.addWidget(self.output_edit, 1)
+        output_row.addWidget(output_browse)
+        self.output_box = QGroupBox("Output file")
+        ob = QVBoxLayout(self.output_box)
+        ob.addLayout(output_row)
+        self.output_box.setVisible(False)
+
         self.msg_line1_edit = QLineEdit()
         self.msg_line1_edit.setPlaceholderText("Message line 1")
         self.msg_line2_edit = QLineEdit()
@@ -85,18 +104,29 @@ class ProgramTab(QWidget):
 
         self.dtmf_code_edit = QLineEdit()
         self.dtmf_code_edit.setPlaceholderText("*001#")
-        self.dtmf_code_edit.setValidator(
-            QRegularExpressionValidator(QRegularExpression(r"^\*\d{3}#$"))
+        self.dtmf_code_edit.setToolTip(
+            "Starting DTMF code in *ddd# format; auto-increments after each flash"
         )
+        self.dtmf_code_edit.setValidator(
+            QRegularExpressionValidator(QRegularExpression(r"^\*?\d{0,3}#?$"))
+        )
+        self.dtmf_code_edit.textChanged.connect(self._check_dtmf_duplicate)
         self.dtmf_nickname_edit = QLineEdit()
         self.dtmf_nickname_edit.setPlaceholderText("Operator name")
+        self.dtmf_warning = QLabel()
+        self.dtmf_warning.setStyleSheet("color: #c0392b;")
+        self.dtmf_warning.setWordWrap(True)
+        self.dtmf_warning.setVisible(False)
         dtmf_form = QFormLayout()
         dtmf_form.addRow("Code:", self.dtmf_code_edit)
         dtmf_form.addRow("Nickname:", self.dtmf_nickname_edit)
         self.dtmf_box = QGroupBox("DTMF code")
         db = QVBoxLayout(self.dtmf_box)
         db.addLayout(dtmf_form)
+        db.addWidget(self.dtmf_warning)
         self.dtmf_box.setVisible(False)
+
+        self._taken_dtmf_codes = set()
 
         self.memory_list = QListWidget()
         mem_add = QPushButton("Add...")
@@ -119,6 +149,7 @@ class ProgramTab(QWidget):
         layout = QVBoxLayout(self)
         layout.addLayout(form)
         layout.addWidget(profile_box)
+        layout.addWidget(self.output_box)
         layout.addWidget(self.msg_override_box)
         layout.addWidget(self.dtmf_box)
         layout.addWidget(memory_box)
@@ -148,6 +179,15 @@ class ProgramTab(QWidget):
         if path:
             self.profile_edit.setText(path)
 
+    def _pick_output(self):
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Select output JSON", "", "JSON (*.json)"
+        )
+        if path:
+            if not path.lower().endswith(".json"):
+                path += ".json"
+            self.output_edit.setText(path)
+
     def _add_memory(self):
         paths, _ = QFileDialog.getOpenFileNames(
             self, "Select memory JSON", "", "JSON (*.json)"
@@ -161,7 +201,11 @@ class ProgramTab(QWidget):
 
     def _update_enablement(self):
         mode = self.mode_combo.currentData()
-        self.profile_box.setEnabled(mode in ("load-profile", "load-profile-and-memory"))
+        self.profile_box.setEnabled(mode in PROFILE_MODES)
+        self.profile_box.setTitle(
+            "Profile (schema to snapshot)" if mode == "download-profile" else "Profile"
+        )
+        self.output_box.setVisible(mode in DOWNLOAD_MODES)
         # memory_box stays interactive in every mode — the list also
         # feeds the Convert tab.
 
@@ -184,10 +228,14 @@ class ProgramTab(QWidget):
                 "mode": self.mode_combo.currentData(),
                 "profile": self.profile_edit.text() or None,
                 "memory_paths": self.memory_paths() or None,
+                "output_path": self.output_edit.text().strip() or None,
                 "verbose": self.verbose_check.isChecked(),
                 "profile_overrides": overrides,
             }
         )
+
+    def current_mode(self) -> str:
+        return self.mode_combo.currentData()
 
     def set_message_override_visible(self, visible: bool):
         self.msg_override_box.setVisible(visible)
@@ -207,7 +255,26 @@ class ProgramTab(QWidget):
     def clear_dtmf_nickname(self):
         self.dtmf_nickname_edit.clear()
 
+    def set_taken_dtmf_codes(self, codes):
+        self._taken_dtmf_codes = set(codes)
+        self._check_dtmf_duplicate()
+
+    def _check_dtmf_duplicate(self):
+        code = self.dtmf_code_edit.text().strip()
+        duplicate = (
+            bool(radijator.DTMF_CODE_RE.match(code)) and code in self._taken_dtmf_codes
+        )
+        self.dtmf_code_edit.setStyleSheet(
+            "background-color: #f5b7b1;" if duplicate else ""
+        )
+        if duplicate:
+            self.dtmf_warning.setText(
+                f"{code} is already assigned in the DTMF log; choose another."
+            )
+        self.dtmf_warning.setVisible(duplicate)
+
     def set_running(self, running: bool):
         self.run_btn.setEnabled(not running)
+        self.mode_combo.setEnabled(not running)
         self.dtmf_code_edit.setEnabled(not running)
         self.dtmf_nickname_edit.setEnabled(not running)

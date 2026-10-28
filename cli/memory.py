@@ -98,6 +98,24 @@ class RadijatorMemory:
         mem.empty = False
         return mem
 
+    def to_json(self) -> dict:
+        return {
+            "number": self.number,
+            "name": self.name,
+            "frequency": self.freq,
+            "tone": self.tone,
+            "rdcs_code": self.rdcs_code,
+            "tdcs_code": self.tdcs_code,
+            "dcs_polarity": self.dcs_polarity,
+            "mode": self.mode,
+            "tuning_step": self.tuning_step,
+            "duplex": self.duplex,
+            "offset": self.offset,
+            "rtone": self.rtone,
+            "ctone": self.ctone,
+            "ptt_id": self.ptt_id,
+        }
+
     @staticmethod
     def from_json(data: dict, power_level: PowerLevel) -> "RadijatorMemory":
         return RadijatorMemory(

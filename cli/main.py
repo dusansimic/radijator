@@ -78,25 +78,44 @@ def main():
         dest="program_command", help="Program subcommands", required=True
     )
 
-    # load-profile subcommand
-    load_profile_parser = program_subparsers.add_parser(
-        "load-profile", help="Load settings profile to radio"
+    upload_profile_parser = program_subparsers.add_parser(
+        "upload-profile",
+        aliases=["load-profile"],
+        help="Upload settings profile to radio",
     )
-    load_profile_parser.add_argument(
+    upload_profile_parser.add_argument(
         "-P",
         "--profile",
         required=True,
         help="Path to the settings profile JSON file.",
     )
 
-    # print-settings subcommand
+    download_profile_parser = program_subparsers.add_parser(
+        "download-profile",
+        help="Download current settings from radio into a profile JSON file",
+    )
+    download_profile_parser.add_argument(
+        "-P",
+        "--profile",
+        required=True,
+        help="Path to the master settings profile JSON used as the schema "
+        "of which settings to snapshot.",
+    )
+    download_profile_parser.add_argument(
+        "-o",
+        "--output",
+        required=True,
+        help="Path to write the downloaded profile JSON file.",
+    )
+
     program_subparsers.add_parser("print-settings", help="Print current radio settings")
 
-    # load-memory subcommand
-    load_memory_parser = program_subparsers.add_parser(
-        "load-memory", help="Load memory channels to radio"
+    upload_memory_parser = program_subparsers.add_parser(
+        "upload-memory",
+        aliases=["load-memory"],
+        help="Upload memory channels to radio",
     )
-    load_memory_parser.add_argument(
+    upload_memory_parser.add_argument(
         "-M",
         "--memory",
         required=True,
@@ -104,18 +123,29 @@ def main():
         action="append",
     )
 
-    # load-profile-and-memory subcommand
-    load_both_parser = program_subparsers.add_parser(
-        "load-profile-and-memory",
-        help="Load both settings profile and memory channels to radio",
+    download_memory_parser = program_subparsers.add_parser(
+        "download-memory",
+        help="Download memory channels from radio into a JSON file",
     )
-    load_both_parser.add_argument(
+    download_memory_parser.add_argument(
+        "-o",
+        "--output",
+        required=True,
+        help="Path to write the downloaded memory JSON file.",
+    )
+
+    upload_both_parser = program_subparsers.add_parser(
+        "upload-profile-and-memory",
+        aliases=["load-profile-and-memory"],
+        help="Upload both settings profile and memory channels to radio",
+    )
+    upload_both_parser.add_argument(
         "-P",
         "--profile",
         required=True,
         help="Path to the settings profile JSON file.",
     )
-    load_both_parser.add_argument(
+    upload_both_parser.add_argument(
         "-M",
         "--memory",
         required=True,

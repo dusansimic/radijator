@@ -15,7 +15,7 @@ UV-5R.
   - *Radio model:* `uv5r`
   - *Serial port:* `/dev/ttyUSB0` (Linux) or `COM3` (Windows) —
     hit *Refresh* if your port is not listed.
-  - *Operation:* `Load memory`
+  - *Operation:* `Upload memory (to device)`
 4. In the *Memory files* group, click *Add...* and pick
   `memories/pmr.json` from the repository (or your own memory JSON).
 5. Click *Run*.

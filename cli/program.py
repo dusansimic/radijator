@@ -1,12 +1,31 @@
 """program subcommand: orchestrates download → modify → upload."""
 
 import json
+import os
 from typing import Iterable
 
-from .dtmf import DTMF_CODE_RE, _append_dtmf_row
+from .dtmf import DTMF_CODE_RE, _append_dtmf_row, _read_dtmf_codes
 from .memory import RadijatorMemory
 from .progress import cli_reporter
 from .radio import RADIO_MODEL_ID_CLASS_DICT, RadijatorRadio
+
+MODE_ALIASES = {
+    "load-profile": "upload-profile",
+    "load-memory": "upload-memory",
+    "load-profile-and-memory": "upload-profile-and-memory",
+}
+_PROFILE_MODES = ("download-profile", "upload-profile", "upload-profile-and-memory")
+_PROFILE_UPLOAD_MODES = ("upload-profile", "upload-profile-and-memory")
+_MEMORY_UPLOAD_MODES = ("upload-memory", "upload-profile-and-memory")
+_UPLOAD_MODES = ("upload-profile", "upload-memory", "upload-profile-and-memory")
+_DOWNLOAD_MODES = ("download-profile", "download-memory")
+
+
+def _write_json(path: str, data, log_fn=print):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+    log_fn(f"Wrote {path}")
 
 
 def run_program(
@@ -15,6 +34,7 @@ def run_program(
     mode: str,
     profile: str = None,
     memory_paths: Iterable[str] = None,
+    output_path: str = None,
     verbose: bool = False,
     log_fn=print,
     progress_fn=None,
@@ -25,17 +45,27 @@ def run_program(
 ):
     """Core program workflow, usable by CLI and GUI.
 
-    mode: one of "print-settings", "load-profile", "load-memory",
-          "load-profile-and-memory".
+    mode: one of "print-settings", "download-profile", "upload-profile",
+          "download-memory", "upload-memory", "upload-profile-and-memory",
+          or a legacy "load-*" alias from MODE_ALIASES.
+
+    "download-*" reads the radio and writes a JSON file at output_path.
+    "upload-*" apply the given JSON to the radio and clone it back.
+    download-profile reuses "profile" as the master schema to snapshot.
     """
-    if mode in ["load-profile", "load-profile-and-memory"] and not profile:
-        raise ValueError(
-            "profile is required for load-profile / load-profile-and-memory"
-        )
-    if mode in ["load-memory", "load-profile-and-memory"] and not memory_paths:
-        raise ValueError(
-            "memory_paths is required for load-memory / load-profile-and-memory"
-        )
+    mode = MODE_ALIASES.get(mode, mode)
+    if mode in _PROFILE_MODES and not profile:
+        raise ValueError(f"profile is required for {mode}")
+    if mode in _MEMORY_UPLOAD_MODES and not memory_paths:
+        raise ValueError(f"memory_paths is required for {mode}")
+    if mode in _DOWNLOAD_MODES and not output_path:
+        raise ValueError(f"output_path is required for {mode}")
+    # The download holds only this model's entries; writing over the master
+    # would drop every other model's settings.
+    if mode == "download-profile" and os.path.realpath(output_path) == os.path.realpath(
+        profile
+    ):
+        raise ValueError("output_path must differ from the master profile")
 
     dtmf_active = any((dtmf_code, dtmf_nickname, dtmf_csv))
     if dtmf_active and not all((dtmf_code, dtmf_nickname, dtmf_csv)):
@@ -44,17 +74,22 @@ def run_program(
         )
     if dtmf_code is not None and not DTMF_CODE_RE.match(dtmf_code):
         raise ValueError(f"DTMF code must match *ddd# (got {dtmf_code!r})")
+    if dtmf_active and mode not in _UPLOAD_MODES:
+        raise ValueError(f"DTMF options only apply to upload modes, not {mode}")
+    if dtmf_active and dtmf_code in _read_dtmf_codes(dtmf_csv):
+        raise ValueError(f"DTMF code {dtmf_code} is already in {dtmf_csv}")
 
     radio: RadijatorRadio = RADIO_MODEL_ID_CLASS_DICT[radio_model](port)
 
+    uploads = mode in _UPLOAD_MODES
     log_fn("Downloading settings from radio...")
     radio.download_fw(
-        wait_for_reset=mode != "print-settings",
+        wait_for_reset=uploads,
         log_fn=log_fn,
         progress_fn=progress_fn,
     )
 
-    if mode in ["load-profile", "load-profile-and-memory"]:
+    if mode in _PROFILE_UPLOAD_MODES:
         radio.set_settings_profile(
             profile,
             verbose,
@@ -63,7 +98,19 @@ def run_program(
         )
     if mode == "print-settings":
         radio.print_settings(log_fn=log_fn)
-    if mode in ["load-memory", "load-profile-and-memory"]:
+    if mode == "download-profile":
+        _write_json(
+            output_path,
+            radio.dump_settings_profile(profile, log_fn=log_fn),
+            log_fn=log_fn,
+        )
+    if mode == "download-memory":
+        _write_json(
+            output_path,
+            radio.dump_memories(log_fn=log_fn, progress_fn=progress_fn),
+            log_fn=log_fn,
+        )
+    if mode in _MEMORY_UPLOAD_MODES:
         memories = []
         for memory_file in memory_paths:
             with open(memory_file, "r", encoding="utf-8") as f:
@@ -75,7 +122,7 @@ def run_program(
 
         radio.set_memories(memories, verbose, log_fn=log_fn, progress_fn=progress_fn)
 
-    if mode != "print-settings":
+    if uploads:
         if dtmf_code:
             radio.set_dtmf_code(dtmf_code, log_fn=log_fn)
             width = getattr(radio, "POWERON_MSG_WIDTH", 7)
@@ -101,6 +148,7 @@ def handle_program_command(args):
             mode=args.program_command,
             profile=getattr(args, "profile", None),
             memory_paths=getattr(args, "memory", None),
+            output_path=getattr(args, "output", None),
             verbose=args.verbose,
             log_fn=log_fn,
             progress_fn=progress_fn,

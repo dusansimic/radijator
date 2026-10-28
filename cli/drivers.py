@@ -21,6 +21,13 @@ from .memory import RadijatorMemory
 from .radio import RadijatorRadio, register_radio
 
 
+def _read_pttid(chirp_mem: Memory) -> bool:
+    for setting in chirp_mem.extra or []:
+        if setting.get_name() == "pttid":
+            return str(setting.value) != "Off"
+    return False
+
+
 class _BaofengUV5RFamily(RadijatorRadio):
     """Shared DTMF / per-memory PTT-ID / power-on-message logic for the
     UV-5R, UV-82, UV-6R and UV-9R drivers. Subclasses override the
@@ -69,6 +76,9 @@ class _BaofengUV5RFamily(RadijatorRadio):
                 ),
             )
         )
+
+    def _read_memory_extras(self, chirp_mem: Memory, rad_mem: RadijatorMemory):
+        rad_mem.ptt_id = _read_pttid(chirp_mem)
 
     def set_power_on_message(self, line1: str, line2: str, log_fn=print):
         if self._settings is None:
@@ -199,6 +209,9 @@ class _BaofengUV17ProFamily(RadijatorRadio):
                 ),
             )
         )
+
+    def _read_memory_extras(self, chirp_mem: Memory, rad_mem: RadijatorMemory):
+        rad_mem.ptt_id = _read_pttid(chirp_mem)
 
 
 @register_radio

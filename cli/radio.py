@@ -184,15 +184,26 @@ class RadijatorRadio:
         transposed = self._transpose_settings_profile(profile_file_name)
 
         current = {}
+        uninitialized = set()
         for setting in self._settings.walk():
             try:
-                current[setting.get_name()] = _json_safe(setting[0].get_value())
+                value = setting[0]
             except (IndexError, AttributeError):
                 continue
+            # A null in the profile would crash set_settings_profile on upload.
+            if not value.initialized:
+                uninitialized.add(setting.get_name())
+                continue
+            current[setting.get_name()] = _json_safe(value.get_value())
 
         out = {}
         for chirp_name, entry in transposed.items():
-            if chirp_name in current:
+            if chirp_name in uninitialized:
+                log_fn(
+                    f"Setting {entry['pretty_name']} ({chirp_name}) is out of "
+                    f"range on radio; skipping"
+                )
+            elif chirp_name in current:
                 out[entry["pretty_name"]] = {
                     self.RADIJATOR_SETTINGS_PROFILE_ID: {
                         "name": chirp_name,
@@ -214,7 +225,9 @@ class RadijatorRadio:
         for step, i in enumerate(self.MEMORY_RANGE, start=1):
             mem = self.radio.get_memory(i)
             if not mem.empty:
-                out.append(RadijatorMemory.from_chirp_memory(mem).to_json())
+                rad_mem = RadijatorMemory.from_chirp_memory(mem)
+                self._read_memory_extras(mem, rad_mem)
+                out.append(rad_mem.to_json())
             if progress_fn:
                 progress_fn(step, total, "Reading memories")
         log_fn(f"Read {len(out)} non-empty memory channel(s) from radio")
@@ -254,6 +267,11 @@ class RadijatorRadio:
     def _apply_memory_extras(self, chirp_mem: Memory, rad_mem: RadijatorMemory):
         """Subclass hook to attach driver-specific Memory.extra entries
         (e.g. PTT-ID, BCL). Default: no-op."""
+        pass
+
+    def _read_memory_extras(self, chirp_mem: Memory, rad_mem: RadijatorMemory):
+        """Inverse of _apply_memory_extras: copy driver-specific Memory.extra
+        entries back onto rad_mem. Default: no-op."""
         pass
 
     def set_dtmf_code(self, code: str, log_fn=print):

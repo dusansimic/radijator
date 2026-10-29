@@ -169,11 +169,11 @@ fields:
   refused.
 - *Nickname* — free-text label. Programmed onto the radio and written
   to the log.
-- *Real name* — optional. Written to the log only, never to the radio.
+- *Note* — optional. Written to the log only, never to the radio.
 
 The CSV file is selected on the *DTMF* tab. The row is added only
 after a successful *Run*. Then the code field changes to the next code
-and the nickname and real name clear.
+and the nickname and note clear.
 
 DTMF codes are written only in the upload modes. *Print settings* and
 the download modes ignore the DTMF fields.
@@ -224,12 +224,12 @@ the CSV log file picker and lets you manage the entries in that log.
     file and click *Reload*.
 - *Add entry* — add a code to the log without programming a radio,
   for example for a radio that was programmed elsewhere. Fill in
-  *Code*, *Nickname* and, optionally, *Real name*, then click *Add*.
+  *Code*, *Nickname* and, optionally, *Note*, then click *Add*.
   *Code* is filled with the next code automatically.
 - *Entries* — the rows in the log, always sorted by code. Select a row
   and:
-  - *Edit real name...* (or double-click the row) — change the real
-    name. The code and nickname cannot be changed, because they are
+  - *Edit note...* (or double-click the row) — change the
+    note. The code and nickname cannot be changed, because they are
     programmed onto the radio.
   - *Remove* — delete the row after you confirm. The radio keeps its
     code.

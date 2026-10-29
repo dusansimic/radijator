@@ -227,7 +227,7 @@ class MainWindow(QMainWindow):
                 "dtmf_csv": csv_path,
                 "dtmf_code": code,
                 "dtmf_nickname": nickname,
-                "dtmf_real_name": self.program_tab.dtmf_real_name(),
+                "dtmf_note": self.program_tab.dtmf_note(),
             }
         missing = self._validate_program(kwargs)
         if missing:

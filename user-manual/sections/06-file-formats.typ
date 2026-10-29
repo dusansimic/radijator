@@ -201,17 +201,18 @@ A log of assigned DTMF codes, one row per code. The CLI (with the
 add a row after each successful flash. On the GUI *DTMF* tab you can
 also add, edit and remove rows without a radio.
 
-- Three columns: `code,nickname,real_name`.
+- Three columns: `code,nickname,note`.
 - `code` matches `*ddd#` — asterisk, three decimal digits, hash. Each
   code occurs only once.
 - `nickname` is free-text and must not be empty. It is programmed onto
   the radio (power-on message).
-- `real_name` is free-text and can be empty. It is written to the CSV
-  only, never to the radio. Use it to record who holds the code.
+- `note` is free-text and can be empty. It is written to the CSV
+  only, never to the radio. Use it to record who holds the code or
+  anything else about the radio.
 - Radijator rewrites the whole file on each change and keeps the rows
   sorted by code. The header row is always written.
 - Files in the older two-column format (`code,nickname`) are still
-  read; the real name is empty. The file changes to three columns on
+  read; the note is empty. The file changes to three columns on
   the first write.
 - If a row has a bad code, an empty nickname, a duplicate code or the
   wrong number of columns, Radijator shows the line numbers and refuses
@@ -222,7 +223,7 @@ also add, edit and remove rows without a radio.
 Example file:
 
 ```
-code,nickname,real_name
+code,nickname,note
 *001#,alice,Alice Petrović
 *002#,bob,
 *005#,carol,"Carol Smith, base 2"

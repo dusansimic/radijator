@@ -42,8 +42,8 @@ radijator program -R <model> -p <port> [--verbose] <mode> [mode-args]
     [Path to the DTMF log CSV. Created on first use; the
     header is written automatically. Each successful run adds one
     row. Coupled with `--dtmf-code` and `--dtmf-nickname`.],
-  [`--dtmf-real-name`],
-    [Optional. Real name of the operator, written to the CSV only. It
+  [`--dtmf-note`],
+    [Optional. Free-text note, written to the CSV only. It
     is not programmed onto the radio. Requires the three flags above.],
 )
 
@@ -57,7 +57,7 @@ A combined example flashing memories and logging the DTMF code:
 ```sh
 radijator program -R uv5r -p /dev/ttyUSB0 \
   --dtmf-code "*042#" --dtmf-nickname "alice" \
-  --dtmf-real-name "Alice Petrović" --dtmf-csv dtmf.csv \
+  --dtmf-note "Alice Petrović" --dtmf-csv dtmf.csv \
   upload-memory -M memories/pmr.json
 ```
 

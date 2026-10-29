@@ -1,4 +1,4 @@
-"""DTMF code validation and the DTMF log CSV (code, nickname, real name)."""
+"""DTMF code validation and the DTMF log CSV (code, nickname, note)."""
 
 import argparse
 import csv
@@ -7,7 +7,8 @@ import re
 from dataclasses import dataclass
 
 DTMF_CODE_RE = re.compile(r"^\*\d{3}#$")
-DTMF_CSV_HEADER = ["code", "nickname", "real_name"]
+DTMF_CSV_HEADER = ["code", "nickname", "note"]
+_REAL_NAME_HEADER = ["code", "nickname", "real_name"]
 _LEGACY_HEADER = ["code", "nickname"]
 
 
@@ -19,7 +20,7 @@ class DtmfLogError(ValueError):
 class DtmfEntry:
     code: str
     nickname: str
-    real_name: str = ""
+    note: str = ""
 
 
 def _validate_dtmf_code(value: str) -> str:
@@ -47,7 +48,11 @@ def load_dtmf_log(csv_path: str) -> list:
     with open(csv_path, "r", newline="", encoding="utf-8-sig") as f:
         rows = list(enumerate(csv.reader(f), start=1))
 
-    if rows and [c.strip() for c in rows[0][1]] in (DTMF_CSV_HEADER, _LEGACY_HEADER):
+    if rows and [c.strip() for c in rows[0][1]] in (
+        DTMF_CSV_HEADER,
+        _REAL_NAME_HEADER,
+        _LEGACY_HEADER,
+    ):
         rows = rows[1:]
 
     entries = []
@@ -61,7 +66,7 @@ def load_dtmf_log(csv_path: str) -> list:
             errors.append(f"line {line}: expected 2 or 3 columns, got {len(cells)}")
             continue
         code, nickname = cells[0], cells[1]
-        real_name = cells[2] if len(cells) == 3 else ""
+        note = cells[2] if len(cells) == 3 else ""
         if not DTMF_CODE_RE.match(code):
             errors.append(f"line {line}: bad code {code!r}")
             continue
@@ -74,7 +79,7 @@ def load_dtmf_log(csv_path: str) -> list:
             )
             continue
         seen[code] = line
-        entries.append(DtmfEntry(code, nickname, real_name))
+        entries.append(DtmfEntry(code, nickname, note))
 
     if errors:
         raise DtmfLogError(f"{csv_path}:\n" + "\n".join(errors))
@@ -87,33 +92,33 @@ def save_dtmf_log(csv_path: str, entries) -> None:
         writer = csv.writer(f)
         writer.writerow(DTMF_CSV_HEADER)
         for e in _sorted(entries):
-            writer.writerow([e.code, e.nickname, e.real_name])
+            writer.writerow([e.code, e.nickname, e.note])
     os.replace(tmp_path, csv_path)
 
 
-def add_dtmf_entry(csv_path: str, code: str, nickname: str, real_name: str = ""):
-    code, nickname, real_name = code.strip(), nickname.strip(), real_name.strip()
+def add_dtmf_entry(csv_path: str, code: str, nickname: str, note: str = ""):
+    code, nickname, note = code.strip(), nickname.strip(), note.strip()
     if not DTMF_CODE_RE.match(code):
         raise DtmfLogError(f"DTMF code must match *ddd# (got {code!r})")
     if not nickname:
         raise DtmfLogError("nickname is required")
     _check_text("nickname", nickname)
-    _check_text("real name", real_name)
+    _check_text("note", note)
     entries = load_dtmf_log(csv_path)
     if any(e.code == code for e in entries):
         raise DtmfLogError(f"DTMF code {code} is already in {csv_path}")
-    entries.append(DtmfEntry(code, nickname, real_name))
+    entries.append(DtmfEntry(code, nickname, note))
     save_dtmf_log(csv_path, entries)
     return _sorted(entries)
 
 
-def update_dtmf_real_name(csv_path: str, code: str, real_name: str):
-    real_name = real_name.strip()
-    _check_text("real name", real_name)
+def update_dtmf_note(csv_path: str, code: str, note: str):
+    note = note.strip()
+    _check_text("note", note)
     entries = load_dtmf_log(csv_path)
     for i, e in enumerate(entries):
         if e.code == code:
-            entries[i] = DtmfEntry(e.code, e.nickname, real_name)
+            entries[i] = DtmfEntry(e.code, e.nickname, note)
             save_dtmf_log(csv_path, entries)
             return entries
     raise DtmfLogError(f"DTMF code {code} is not in {csv_path}")

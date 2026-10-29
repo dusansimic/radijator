@@ -60,12 +60,12 @@ class DtmfTab(QWidget):
         )
         self.nickname_edit = QLineEdit()
         self.nickname_edit.setPlaceholderText("Programmed onto the radio")
-        self.real_name_edit = QLineEdit()
-        self.real_name_edit.setPlaceholderText("Optional, logged only")
-        self.real_name_edit.setToolTip(
+        self.note_edit = QLineEdit()
+        self.note_edit.setPlaceholderText("Optional, logged only")
+        self.note_edit.setToolTip(
             "Stored in the DTMF CSV only. Not programmed onto the radio."
         )
-        for edit in (self.code_edit, self.nickname_edit, self.real_name_edit):
+        for edit in (self.code_edit, self.nickname_edit, self.note_edit):
             edit.textChanged.connect(self._update_enablement)
         self.add_warning = QLabel()
         self.add_warning.setStyleSheet("color: #c0392b;")
@@ -76,7 +76,7 @@ class DtmfTab(QWidget):
         add_form = QFormLayout()
         add_form.addRow("Code:", self.code_edit)
         add_form.addRow("Nickname:", self.nickname_edit)
-        add_form.addRow("Real name:", self.real_name_edit)
+        add_form.addRow("Note:", self.note_edit)
         add_btn_row = QHBoxLayout()
         add_btn_row.addWidget(self.add_warning, 1)
         add_btn_row.addWidget(self.add_btn)
@@ -86,7 +86,7 @@ class DtmfTab(QWidget):
         ab.addLayout(add_btn_row)
 
         self.table = QTableWidget(0, 3)
-        self.table.setHorizontalHeaderLabels(["Code", "Nickname", "Real name"])
+        self.table.setHorizontalHeaderLabels(["Code", "Nickname", "Note"])
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -96,10 +96,10 @@ class DtmfTab(QWidget):
         header.setSectionResizeMode(2, QHeaderView.Stretch)
         self.table.verticalHeader().setVisible(False)
         self.table.itemSelectionChanged.connect(self._update_enablement)
-        self.table.cellDoubleClicked.connect(lambda *_: self._edit_real_name())
-        self.edit_btn = QPushButton("Edit real name...")
+        self.table.cellDoubleClicked.connect(lambda *_: self._edit_note())
+        self.edit_btn = QPushButton("Edit note...")
         self.remove_btn = QPushButton("Remove")
-        self.edit_btn.clicked.connect(self._edit_real_name)
+        self.edit_btn.clicked.connect(self._edit_note)
         self.remove_btn.clicked.connect(self._remove_entry)
         table_btn_row = QHBoxLayout()
         table_btn_row.addStretch(1)
@@ -159,7 +159,7 @@ class DtmfTab(QWidget):
         for r, e in enumerate(self._entries):
             self.table.setItem(r, 0, QTableWidgetItem(e.code))
             self.table.setItem(r, 1, QTableWidgetItem(e.nickname))
-            self.table.setItem(r, 2, QTableWidgetItem(e.real_name))
+            self.table.setItem(r, 2, QTableWidgetItem(e.note))
             if e.code == select_code:
                 self.table.selectRow(r)
         self.table_box.setTitle(f"Entries ({len(self._entries)})")
@@ -218,25 +218,25 @@ class DtmfTab(QWidget):
             radijator.add_dtmf_entry,
             code,
             self.nickname_edit.text(),
-            self.real_name_edit.text(),
+            self.note_edit.text(),
         ):
             self.nickname_edit.clear()
-            self.real_name_edit.clear()
+            self.note_edit.clear()
             self.code_edit.setText(self.next_code() or "")
 
-    def _edit_real_name(self):
+    def _edit_note(self):
         entry = self._selected_entry()
         if entry is None or not self.edit_btn.isEnabled():
             return
         text, ok = QInputDialog.getText(
             self,
-            "Edit real name",
-            f"Real name for {entry.code} ({entry.nickname}):",
-            text=entry.real_name,
+            "Edit note",
+            f"Note for {entry.code} ({entry.nickname}):",
+            text=entry.note,
         )
         if ok:
             self._mutate(
-                radijator.update_dtmf_real_name,
+                radijator.update_dtmf_note,
                 entry.code,
                 text,
                 select_code=entry.code,
@@ -246,11 +246,11 @@ class DtmfTab(QWidget):
         entry = self._selected_entry()
         if entry is None:
             return
-        who = ", ".join(x for x in (entry.nickname, entry.real_name) if x)
         answer = QMessageBox.question(
             self,
             "Remove entry",
-            f"Remove {entry.code} ({who}) from the log? The radio keeps its code.",
+            f"Remove {entry.code} ({entry.nickname}) from the log? "
+            "The radio keeps its code.",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         )

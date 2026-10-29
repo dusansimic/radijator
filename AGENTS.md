@@ -25,6 +25,7 @@ A workflow tool for flashing Baofeng / Radtel handheld radios via CHIRP drivers.
 │  ├─ convert_tab.py       # JSON → CSV converter UI
 │  ├─ dtmf_tab.py          # DTMF CSV log manager (add, edit note, remove)
 │  └─ worker.py            # QThread wrapping run_program/run_convert
+├─ assets/                 # App icon: radijator.svg (master) → .png, .ico
 ├─ user-manual/            # Typst user manual sources (compiles to PDF)
 ├─ memories/               # Sample memory JSON files
 ├─ settings_profile.json   # Per-radio human-readable setting → CHIRP path map
@@ -135,6 +136,21 @@ The DTMF CSV is `code,nickname,note`. Code and nickname go onto the radio; note 
 - `.github/workflows/build.yml` matrix-builds for Linux + Windows on every push to `main`. Artifacts retained for 1 day.
 - `.github/workflows/user-manual.yml` compiles the Typst manual on changes to `user-manual/` and uploads the PDF.
 - Screenshots in `user-manual/assets/*.png` are tracked via Git LFS — `git lfs install` once per clone.
+
+### App icon
+
+`assets/radijator.svg` is the master. `radijator.png` (256 px, loaded at runtime by `radijator_gui.py` via `QApplication.setWindowIcon`) and `radijator.ico` (16–256 px, embedded into both `.exe` files by `radijator.spec`) are generated from it and committed. Regenerate after editing the SVG (needs ImageMagick with librsvg, and Pillow):
+
+```sh
+cd assets && T=$(mktemp -d)
+for s in 16 24 32 48 64 256; do
+  magick -background none -density $((6*s)) radijator.svg -resize ${s}x${s} PNG32:$T/$s.png
+done
+cp $T/256.png radijator.png
+python3 -c "import sys; from PIL import Image; t=sys.argv[1]; z=[16,24,32,48,64,256]; i=[Image.open(f'{t}/{s}.png') for s in z]; i[-1].save('radijator.ico', sizes=[(s,s) for s in z], append_images=i[:-1])" $T
+```
+
+Each size is rendered from the SVG directly instead of downscaled, so 16/24 px stay crisp. Pillow stores PNG-compressed ICO layers (~18 KB vs ~300 KB from ImageMagick's BMP layers).
 
 ### Releasing
 

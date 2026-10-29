@@ -196,24 +196,34 @@ field with the lowercase CHIRP name (`duplex`, `cross_mode`, `power`,
 
 == DTMF log CSV
 
-A flat append-only log of `(DTMF code, nickname)` pairs, one row per
-successfully programmed radio. Written by both the CLI (with the
-`--dtmf-*` flags) and the GUI (with *Options → Configure DTMF code*).
+A log of assigned DTMF codes, one row per code. The CLI (with the
+`--dtmf-*` flags) and the GUI (with *Options → Configure DTMF code*)
+add a row after each successful flash. On the GUI *DTMF* tab you can
+also add, edit and remove rows without a radio.
 
-- Two columns: `code,nickname`.
-- `code` matches `*ddd#` — asterisk, three decimal digits, hash.
-- `nickname` is free-text.
-- The header row is written automatically on the first append into an
-  empty or non-existent file. Subsequent appends never duplicate the
-  header.
-- A failed flash does *not* write a row, so the log only reflects
-  radios that actually got programmed.
+- Three columns: `code,nickname,real_name`.
+- `code` matches `*ddd#` — asterisk, three decimal digits, hash. Each
+  code occurs only once.
+- `nickname` is free-text and must not be empty. It is programmed onto
+  the radio (power-on message).
+- `real_name` is free-text and can be empty. It is written to the CSV
+  only, never to the radio. Use it to record who holds the code.
+- Radijator rewrites the whole file on each change and keeps the rows
+  sorted by code. The header row is always written.
+- Files in the older two-column format (`code,nickname`) are still
+  read; the real name is empty. The file changes to three columns on
+  the first write.
+- If a row has a bad code, an empty nickname, a duplicate code or the
+  wrong number of columns, Radijator shows the line numbers and refuses
+  all changes to the file, including DTMF uploads. Fix the file by
+  hand, then try again.
+- A failed flash does *not* write a row.
 
-Example file after three successful flashes:
+Example file:
 
 ```
-code,nickname
-*001#,alice
-*002#,bob
-*003#,carol
+code,nickname,real_name
+*001#,alice,Alice Petrović
+*002#,bob,
+*005#,carol,"Carol Smith, base 2"
 ```

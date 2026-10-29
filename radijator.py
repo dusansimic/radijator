@@ -31,7 +31,16 @@ import warnings
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, module=r"chirp\..*")
 from cli.convert import run_convert  # noqa: F401
-from cli.dtmf import DTMF_CODE_RE, _next_dtmf_code  # noqa: F401
+from cli.dtmf import (  # noqa: F401
+    DTMF_CODE_RE,
+    DtmfEntry,
+    DtmfLogError,
+    add_dtmf_entry,
+    load_dtmf_log,
+    next_dtmf_code,
+    remove_dtmf_entry,
+    update_dtmf_real_name,
+)
 from cli.main import _log_crash, main
 from cli.memory import RadijatorMemory  # noqa: F401
 from cli.program import run_program  # noqa: F401

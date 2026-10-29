@@ -4,7 +4,7 @@ import json
 import os
 from typing import Iterable
 
-from .dtmf import DTMF_CODE_RE, _append_dtmf_row, _read_dtmf_codes
+from .dtmf import DTMF_CODE_RE, add_dtmf_entry, load_dtmf_log
 from .memory import RadijatorMemory
 from .progress import cli_reporter
 from .radio import RADIO_MODEL_ID_CLASS_DICT, RadijatorRadio
@@ -42,6 +42,7 @@ def run_program(
     dtmf_code: str = None,
     dtmf_nickname: str = None,
     dtmf_csv: str = None,
+    dtmf_real_name: str = "",
 ):
     """Core program workflow, usable by CLI and GUI.
 
@@ -72,11 +73,17 @@ def run_program(
         raise ValueError(
             "dtmf_code, dtmf_nickname and dtmf_csv must all be set together"
         )
+    if dtmf_real_name and not dtmf_active:
+        raise ValueError(
+            "dtmf_real_name requires dtmf_code, dtmf_nickname and dtmf_csv"
+        )
     if dtmf_code is not None and not DTMF_CODE_RE.match(dtmf_code):
         raise ValueError(f"DTMF code must match *ddd# (got {dtmf_code!r})")
     if dtmf_active and mode not in _UPLOAD_MODES:
         raise ValueError(f"DTMF options only apply to upload modes, not {mode}")
-    if dtmf_active and dtmf_code in _read_dtmf_codes(dtmf_csv):
+    # Load before touching the radio: a malformed log must not leave a
+    # flashed radio that cannot be logged.
+    if dtmf_active and dtmf_code in {e.code for e in load_dtmf_log(dtmf_csv)}:
         raise ValueError(f"DTMF code {dtmf_code} is already in {dtmf_csv}")
 
     radio: RadijatorRadio = RADIO_MODEL_ID_CLASS_DICT[radio_model](port)
@@ -136,7 +143,8 @@ def run_program(
         log_fn("Done.")
 
         if dtmf_active:
-            _append_dtmf_row(dtmf_csv, dtmf_code, dtmf_nickname, log_fn=log_fn)
+            add_dtmf_entry(dtmf_csv, dtmf_code, dtmf_nickname, dtmf_real_name or "")
+            log_fn(f"Logged DTMF {dtmf_code} ({dtmf_nickname}) to {dtmf_csv}")
 
 
 def handle_program_command(args):
@@ -155,4 +163,5 @@ def handle_program_command(args):
             dtmf_code=getattr(args, "dtmf_code", None),
             dtmf_nickname=getattr(args, "dtmf_nickname", None),
             dtmf_csv=getattr(args, "dtmf_csv", None),
+            dtmf_real_name=getattr(args, "dtmf_real_name", None) or "",
         )

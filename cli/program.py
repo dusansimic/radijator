@@ -42,7 +42,7 @@ def run_program(
     dtmf_code: str = None,
     dtmf_nickname: str = None,
     dtmf_csv: str = None,
-    dtmf_real_name: str = "",
+    dtmf_note: str = "",
 ):
     """Core program workflow, usable by CLI and GUI.
 
@@ -73,10 +73,8 @@ def run_program(
         raise ValueError(
             "dtmf_code, dtmf_nickname and dtmf_csv must all be set together"
         )
-    if dtmf_real_name and not dtmf_active:
-        raise ValueError(
-            "dtmf_real_name requires dtmf_code, dtmf_nickname and dtmf_csv"
-        )
+    if dtmf_note and not dtmf_active:
+        raise ValueError("dtmf_note requires dtmf_code, dtmf_nickname and dtmf_csv")
     if dtmf_code is not None and not DTMF_CODE_RE.match(dtmf_code):
         raise ValueError(f"DTMF code must match *ddd# (got {dtmf_code!r})")
     if dtmf_active and mode not in _UPLOAD_MODES:
@@ -143,7 +141,7 @@ def run_program(
         log_fn("Done.")
 
         if dtmf_active:
-            add_dtmf_entry(dtmf_csv, dtmf_code, dtmf_nickname, dtmf_real_name or "")
+            add_dtmf_entry(dtmf_csv, dtmf_code, dtmf_nickname, dtmf_note or "")
             log_fn(f"Logged DTMF {dtmf_code} ({dtmf_nickname}) to {dtmf_csv}")
 
 
@@ -163,5 +161,5 @@ def handle_program_command(args):
             dtmf_code=getattr(args, "dtmf_code", None),
             dtmf_nickname=getattr(args, "dtmf_nickname", None),
             dtmf_csv=getattr(args, "dtmf_csv", None),
-            dtmf_real_name=getattr(args, "dtmf_real_name", None) or "",
+            dtmf_note=getattr(args, "dtmf_note", None) or "",
         )

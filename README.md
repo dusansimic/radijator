@@ -8,7 +8,7 @@ Built on the battle-tested [CHIRP](https://chirpmyradio.com/) driver suite — R
 
 - **GUI** (PySide6) — pick a model, pick a port, pick your files, click *Run*. Live progress bar driven by [Rich](https://github.com/Textualize/rich). Tabs for programming, converting, and DTMF-code logging.
 - **CLI** — same operations, scriptable. Useful for batches and CI.
-- **Per-radio DTMF tracking** — generate a sequential code for every flashed radio and log it with its nickname and an optional real name (CSV only, not programmed) in a sorted CSV log you can also edit from the GUI. The UV-5R also gets its power-on message rewritten to match.
+- **Per-radio DTMF tracking** — generate a sequential code for every flashed radio and log it with its nickname and an optional note (CSV only, not programmed) in a sorted CSV log you can also edit from the GUI. The UV-5R also gets its power-on message rewritten to match.
 - **JSON → CHIRP CSV** — convert one or more memory files into a single CHIRP-importable CSV. Multiple sources concatenate in order with sequential channel numbers.
 - **Pre-built binaries** — every push to `main` produces standalone Linux and Windows binaries via GitHub Actions; no Python required for end users.
 

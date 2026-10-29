@@ -23,7 +23,7 @@ A workflow tool for flashing Baofeng / Radtel handheld radios via CHIRP drivers.
 │  ├─ main_window.py       # QMainWindow + tabs + menu
 │  ├─ program_tab.py       # Program inputs (radio, port, mode, …)
 │  ├─ convert_tab.py       # JSON → CSV converter UI
-│  ├─ dtmf_tab.py          # DTMF CSV log manager (add, edit real name, remove)
+│  ├─ dtmf_tab.py          # DTMF CSV log manager (add, edit note, remove)
 │  └─ worker.py            # QThread wrapping run_program/run_convert
 ├─ user-manual/            # Typst user manual sources (compiles to PDF)
 ├─ memories/               # Sample memory JSON files
@@ -101,7 +101,7 @@ Canonical modes are `print-settings`, `download-profile`, `download-memory`, `up
 
 ### DTMF log
 
-The DTMF CSV is `code,nickname,real_name`. Code and nickname go onto the radio; real name is CSV-only. Every change goes through `cli/dtmf.py`, which loads, mutates, sorts by code and rewrites the whole file atomically. Two-column legacy files load with an empty real name. A malformed file (bad code, duplicate code, empty nickname, wrong column count) raises `DtmfLogError`, and both the GUI and `run_program` refuse to write until it is fixed by hand, so rows are never dropped silently. The next code is always the highest code + 1; gaps are not reused.
+The DTMF CSV is `code,nickname,note`. Code and nickname go onto the radio; note is CSV-only. Every change goes through `cli/dtmf.py`, which loads, mutates, sorts by code and rewrites the whole file atomically. Two-column legacy files load with an empty note. A malformed file (bad code, duplicate code, empty nickname, wrong column count) raises `DtmfLogError`, and both the GUI and `run_program` refuse to write until it is fixed by hand, so rows are never dropped silently. The next code is always the highest code + 1; gaps are not reused.
 
 ### Memory extras
 

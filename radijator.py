@@ -39,7 +39,7 @@ from cli.dtmf import (  # noqa: F401
     load_dtmf_log,
     next_dtmf_code,
     remove_dtmf_entry,
-    update_dtmf_real_name,
+    update_dtmf_note,
 )
 from cli.main import _log_crash, main
 from cli.memory import RadijatorMemory  # noqa: F401

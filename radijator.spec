@@ -7,6 +7,7 @@ chirp_hidden = [
 ] + ['chirp.wxui.serialtrace']
 chirp_data = collect_data_files('chirp')
 version_data = [('VERSION', '.')]
+icon_data = [('assets/radijator.png', 'assets')]
 
 
 cli_a = Analysis(
@@ -43,6 +44,7 @@ cli_exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon='assets/radijator.ico',
 )
 
 
@@ -50,7 +52,7 @@ gui_a = Analysis(
     ['radijator_gui.py'],
     pathex=[],
     binaries=[],
-    datas=chirp_data + version_data,
+    datas=chirp_data + version_data + icon_data,
     hiddenimports=chirp_hidden,
     hookspath=[],
     hooksconfig={},
@@ -80,4 +82,5 @@ gui_exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon='assets/radijator.ico',
 )

@@ -15,13 +15,30 @@ def _log_crash(exc):
         traceback.print_exc()
 
 
+def _icon_path():
+    if getattr(sys, "frozen", False):
+        base = sys._MEIPASS
+    else:
+        base = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base, "assets", "radijator.png")
+
+
 def main():
+    from PySide6.QtGui import QIcon
     from PySide6.QtWidgets import QApplication
 
     from gui.main_window import MainWindow
 
+    if sys.platform == "win32":
+        # Without an explicit AppUserModelID, Windows groups the window under
+        # python.exe and shows its icon in the taskbar when run from source.
+        import ctypes
+
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("radijator.gui")
+
     app = QApplication(sys.argv)
     app.setApplicationName("Radijator")
+    app.setWindowIcon(QIcon(_icon_path()))
     window = MainWindow()
     window.show()
     sys.exit(app.exec())

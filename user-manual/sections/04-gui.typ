@@ -157,22 +157,23 @@ stays editable in every mode because the *Convert* tab also uses it.
 
 === DTMF code
 
-Visible only when *Options → Configure DTMF code* is checked. Two
+Visible only when *Options → Configure DTMF code* is checked. Three
 fields:
 
 - *Code* — must match `*ddd#` (asterisk, three digits, hash). You can
   edit the field freely; the format is checked when you click *Run*.
-  Seeded automatically with the next free value after the last entry
-  in the selected CSV log; if the CSV is empty or unselected, seeded
-  with `*001#`. If the code is already in the log, the field turns
-  red, a warning shows below it, and *Run* is refused.
-- *Nickname* — free-text label written alongside the code.
+  Filled automatically with the highest code in the log plus one.
+  Free codes below the highest are not reused. If the log is empty or
+  not selected, the value is `*001#`. If the code is already in the
+  log, the field turns red, a warning shows below it, and *Run* is
+  refused.
+- *Nickname* — free-text label. Programmed onto the radio and written
+  to the log.
+- *Real name* — optional. Written to the log only, never to the radio.
 
-The CSV file these rows append to is selected on the *DTMF* tab. The
-row is appended only after a successful *Run*; the code field auto-
-bumps to the next sequential value (`*041#` → `*042#`, wrapping at
-`*999#` to `*000#`), skipping codes already in the log, and the
-nickname clears.
+The CSV file is selected on the *DTMF* tab. The row is added only
+after a successful *Run*. Then the code field changes to the next code
+and the nickname and real name clear.
 
 DTMF codes are written only in the upload modes. *Print settings* and
 the download modes ignore the DTMF fields.
@@ -210,21 +211,39 @@ nothing.
 == DTMF tab
 
 Visible only when *Options → Configure DTMF code* is checked. Holds
-the CSV log file picker and the current contents of that log.
+the CSV log file picker and lets you manage the entries in that log.
 
 - *CSV log file*:
   - *Open existing...* — pick a CSV the operator already has.
   - *New...* — pick a path; an empty file is created on confirm. The
-    `code,nickname` header is written automatically on first append.
-- *Existing entries* — read-only table of the rows already in the
-  selected file. Refreshes after every successful run.
+    header is written automatically on the first change.
+  - *Reload* — read the file again, for example after you fixed it by
+    hand.
+  - If the file has malformed rows, a red message shows the line
+    numbers. All changes and DTMF runs are blocked until you fix the
+    file and click *Reload*.
+- *Add entry* — add a code to the log without programming a radio,
+  for example for a radio that was programmed elsewhere. Fill in
+  *Code*, *Nickname* and, optionally, *Real name*, then click *Add*.
+  *Code* is filled with the next code automatically.
+- *Entries* — the rows in the log, always sorted by code. Select a row
+  and:
+  - *Edit real name...* (or double-click the row) — change the real
+    name. The code and nickname cannot be changed, because they are
+    programmed onto the radio.
+  - *Remove* — delete the row after you confirm. The radio keeps its
+    code.
+
+The table refreshes after every successful run. The buttons are
+disabled while a run is in progress.
 
 The DTMF tab is gated by the *Options* group — toggling *Override
 power-on message* turns this tab off.
 
-The per-radio *Code* and *Nickname* inputs are not in this tab — they
-live in the *Program* tab so the operator can fill them in the same
-place as the other run inputs. See *Program tab → DTMF code* below.
+The inputs for the radio you are about to flash are not in this tab —
+they live in the *Program* tab so the operator can fill them in the
+same place as the other run inputs. See *Program tab → DTMF code*
+above.
 
 == Interpreting log output and progress
 

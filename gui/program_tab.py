@@ -113,6 +113,11 @@ class ProgramTab(QWidget):
         self.dtmf_code_edit.textChanged.connect(self._check_dtmf_duplicate)
         self.dtmf_nickname_edit = QLineEdit()
         self.dtmf_nickname_edit.setPlaceholderText("Operator name")
+        self.dtmf_real_name_edit = QLineEdit()
+        self.dtmf_real_name_edit.setPlaceholderText("Optional, logged only")
+        self.dtmf_real_name_edit.setToolTip(
+            "Stored in the DTMF CSV only. Not programmed onto the radio."
+        )
         self.dtmf_warning = QLabel()
         self.dtmf_warning.setStyleSheet("color: #c0392b;")
         self.dtmf_warning.setWordWrap(True)
@@ -120,6 +125,7 @@ class ProgramTab(QWidget):
         dtmf_form = QFormLayout()
         dtmf_form.addRow("Code:", self.dtmf_code_edit)
         dtmf_form.addRow("Nickname:", self.dtmf_nickname_edit)
+        dtmf_form.addRow("Real name:", self.dtmf_real_name_edit)
         self.dtmf_box = QGroupBox("DTMF code")
         db = QVBoxLayout(self.dtmf_box)
         db.addLayout(dtmf_form)
@@ -249,11 +255,15 @@ class ProgramTab(QWidget):
     def dtmf_nickname(self) -> str:
         return self.dtmf_nickname_edit.text().strip()
 
+    def dtmf_real_name(self) -> str:
+        return self.dtmf_real_name_edit.text().strip()
+
     def set_dtmf_code(self, code: str):
         self.dtmf_code_edit.setText(code)
 
-    def clear_dtmf_nickname(self):
+    def clear_dtmf_identity(self):
         self.dtmf_nickname_edit.clear()
+        self.dtmf_real_name_edit.clear()
 
     def set_taken_dtmf_codes(self, codes):
         self._taken_dtmf_codes = set(codes)
@@ -278,3 +288,4 @@ class ProgramTab(QWidget):
         self.mode_combo.setEnabled(not running)
         self.dtmf_code_edit.setEnabled(not running)
         self.dtmf_nickname_edit.setEnabled(not running)
+        self.dtmf_real_name_edit.setEnabled(not running)

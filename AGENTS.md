@@ -12,7 +12,7 @@ A workflow tool for flashing Baofeng / Radtel handheld radios via CHIRP drivers.
 │  ├─ memory.py            # RadijatorMemory data class
 │  ├─ radio.py             # RadijatorRadio base + register_radio + registry
 │  ├─ drivers.py           # Concrete driver subclasses (UV-5R, RT-470, …)
-│  ├─ dtmf.py              # DTMF helpers (regex, CSV append, next code)
+│  ├─ dtmf.py              # DTMF code regex + DTMF log CSV load/add/edit/remove
 │  ├─ program.py           # run_program() — download → mutate → upload, or radio → JSON
 │  ├─ convert.py           # run_convert() — JSON memory → CHIRP CSV
 │  ├─ random_dcs.py        # random-dcs helper
@@ -23,7 +23,7 @@ A workflow tool for flashing Baofeng / Radtel handheld radios via CHIRP drivers.
 │  ├─ main_window.py       # QMainWindow + tabs + menu
 │  ├─ program_tab.py       # Program inputs (radio, port, mode, …)
 │  ├─ convert_tab.py       # JSON → CSV converter UI
-│  ├─ dtmf_tab.py          # DTMF CSV log viewer
+│  ├─ dtmf_tab.py          # DTMF CSV log manager (add, edit real name, remove)
 │  └─ worker.py            # QThread wrapping run_program/run_convert
 ├─ user-manual/            # Typst user manual sources (compiles to PDF)
 ├─ memories/               # Sample memory JSON files
@@ -76,7 +76,7 @@ python radijator_gui.py
 `radijator.py` and `radijator_gui.py` are entry scripts. All domain logic lives in `cli/`. `radijator.py` does three jobs:
 
 1. Runs the `chirp.wxui.serialtrace` `stdout/stderr` prelude (see Gotchas).
-2. Re-exports the symbols `gui/*.py` references via `import radijator` — `__version__`, `RADIO_MODEL_ID_CLASS_DICT`, `RadijatorMemory`, `DTMF_CODE_RE`, `_next_dtmf_code`, `run_program`, `run_convert`. These are intentional re-exports — leave the `# noqa: F401` tags.
+2. Re-exports the symbols `gui/*.py` references via `import radijator` — `__version__`, `RADIO_MODEL_ID_CLASS_DICT`, `RadijatorMemory`, `DTMF_CODE_RE`, the DTMF log API from `cli/dtmf.py`, `run_program`, `run_convert`. These are intentional re-exports — leave the `# noqa: F401` tags.
 3. Dispatches `main()` under `__name__ == "__main__"`.
 
 The GUI does NOT import from `cli.*` directly; it goes through `radijator`. This is intentional — it keeps the GUI insulated from the package split.
@@ -98,6 +98,10 @@ Each concrete radio is a subclass of `RadijatorRadio` decorated with `@register_
 ### Program modes
 
 Canonical modes are `print-settings`, `download-profile`, `download-memory`, `upload-profile`, `upload-memory`, `upload-profile-and-memory`. The pre-1.2.0 `load-*` names are argparse `aliases=` and are mapped to `upload-*` by `MODE_ALIASES` at the top of `run_program`, so code below that line only sees canonical names. The GUI's mode tuples in `gui/program_tab.py` mirror the ones in `cli/program.py`; keep them in sync. Download modes skip the reset wait and never call `upload_fw`. DTMF options are rejected for non-upload modes, and `run_program` refuses a code that is already in the DTMF CSV (the GUI also checks this before the run).
+
+### DTMF log
+
+The DTMF CSV is `code,nickname,real_name`. Code and nickname go onto the radio; real name is CSV-only. Every change goes through `cli/dtmf.py`, which loads, mutates, sorts by code and rewrites the whole file atomically. Two-column legacy files load with an empty real name. A malformed file (bad code, duplicate code, empty nickname, wrong column count) raises `DtmfLogError`, and both the GUI and `run_program` refuse to write until it is fixed by hand, so rows are never dropped silently. The next code is always the highest code + 1; gaps are not reused.
 
 ### Memory extras
 

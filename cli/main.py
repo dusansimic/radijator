@@ -72,6 +72,12 @@ def main():
         help="Path to the DTMF log CSV (created if missing). "
         "Requires --dtmf-code and --dtmf-nickname.",
     )
+    program_parser.add_argument(
+        "--dtmf-real-name",
+        help="Real name of the operator. Logged to the DTMF CSV only, not "
+        "programmed onto the radio. Optional; requires --dtmf-code, "
+        "--dtmf-nickname and --dtmf-csv.",
+    )
 
     # Create nested subparsers for program commands
     program_subparsers = program_parser.add_subparsers(
@@ -205,6 +211,11 @@ def main():
         if any(dtmf_args) and not all(dtmf_args):
             parser.error(
                 "--dtmf-code, --dtmf-nickname and --dtmf-csv must be used together"
+            )
+        if getattr(args, "dtmf_real_name", None) and not any(dtmf_args):
+            parser.error(
+                "--dtmf-real-name requires --dtmf-code, --dtmf-nickname and "
+                "--dtmf-csv"
             )
         handle_program_command(args)
     elif args.command == "convert":

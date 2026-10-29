@@ -40,26 +40,29 @@ radijator program -R <model> -p <port> [--verbose] <mode> [mode-args]
     with `--dtmf-code` and `--dtmf-csv`.],
   [`--dtmf-csv`],
     [Path to the DTMF log CSV. Created on first use; the
-    `code,nickname` header is written automatically. Subsequent runs
-    append one row each. Coupled with `--dtmf-code` and
-    `--dtmf-nickname`.],
+    header is written automatically. Each successful run adds one
+    row. Coupled with `--dtmf-code` and `--dtmf-nickname`.],
+  [`--dtmf-real-name`],
+    [Optional. Real name of the operator, written to the CSV only. It
+    is not programmed onto the radio. Requires the three flags above.],
 )
 
 The DTMF flags apply only to the `upload-*` modes. With any other mode
 the run stops with an error. The run also stops before it touches the
-radio if the code is already in the CSV log.
+radio if the code is already in the CSV log, or if the CSV log has
+malformed rows.
 
 A combined example flashing memories and logging the DTMF code:
 
 ```sh
 radijator program -R uv5r -p /dev/ttyUSB0 \
   --dtmf-code "*042#" --dtmf-nickname "alice" \
-  --dtmf-csv dtmf.csv \
+  --dtmf-real-name "Alice Petrović" --dtmf-csv dtmf.csv \
   upload-memory -M memories/pmr.json
 ```
 
-The row `*042#,alice` is appended to `dtmf.csv` only if the flash
-succeeds.
+The row `*042#,alice,Alice Petrović` is added to `dtmf.csv` only if
+the flash succeeds.
 
 === Progress output
 

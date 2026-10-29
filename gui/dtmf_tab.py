@@ -1,13 +1,14 @@
-import csv
-import os
-
-from PySide6.QtCore import Signal
+from PySide6.QtCore import QRegularExpression, Signal
+from PySide6.QtGui import QRegularExpressionValidator
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QFileDialog,
+    QFormLayout,
     QGroupBox,
     QHBoxLayout,
     QHeaderView,
+    QInputDialog,
+    QLabel,
     QLineEdit,
     QMessageBox,
     QPushButton,
@@ -25,38 +26,96 @@ class DtmfTab(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self._entries = []
+        self._error = None
+        self._running = False
 
         self.csv_edit = QLineEdit()
         self.csv_edit.setReadOnly(True)
         self.csv_edit.setPlaceholderText("No file selected")
-        open_btn = QPushButton("Open existing...")
-        new_btn = QPushButton("New...")
-        open_btn.clicked.connect(self._open_existing)
-        new_btn.clicked.connect(self._create_new)
+        self.open_btn = QPushButton("Open existing...")
+        self.new_btn = QPushButton("New...")
+        self.reload_btn = QPushButton("Reload")
+        self.open_btn.clicked.connect(self._open_existing)
+        self.new_btn.clicked.connect(self._create_new)
+        self.reload_btn.clicked.connect(self.refresh_table)
         csv_row = QHBoxLayout()
         csv_row.addWidget(self.csv_edit, 1)
-        csv_row.addWidget(open_btn)
-        csv_row.addWidget(new_btn)
+        csv_row.addWidget(self.open_btn)
+        csv_row.addWidget(self.new_btn)
+        csv_row.addWidget(self.reload_btn)
+        self.error_label = QLabel()
+        self.error_label.setStyleSheet("color: #c0392b;")
+        self.error_label.setWordWrap(True)
+        self.error_label.setVisible(False)
         csv_box = QGroupBox("CSV log file")
         cb = QVBoxLayout(csv_box)
         cb.addLayout(csv_row)
+        cb.addWidget(self.error_label)
 
-        self.table = QTableWidget(0, 2)
-        self.table.setHorizontalHeaderLabels(["Code", "Nickname"])
-        self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.table.setSelectionMode(QAbstractItemView.NoSelection)
-        self.table.horizontalHeader().setSectionResizeMode(
-            0, QHeaderView.ResizeToContents
+        self.code_edit = QLineEdit()
+        self.code_edit.setPlaceholderText("*001#")
+        self.code_edit.setValidator(
+            QRegularExpressionValidator(QRegularExpression(r"^\*?\d{0,3}#?$"))
         )
-        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        self.nickname_edit = QLineEdit()
+        self.nickname_edit.setPlaceholderText("Programmed onto the radio")
+        self.real_name_edit = QLineEdit()
+        self.real_name_edit.setPlaceholderText("Optional, logged only")
+        self.real_name_edit.setToolTip(
+            "Stored in the DTMF CSV only. Not programmed onto the radio."
+        )
+        for edit in (self.code_edit, self.nickname_edit, self.real_name_edit):
+            edit.textChanged.connect(self._update_enablement)
+        self.add_warning = QLabel()
+        self.add_warning.setStyleSheet("color: #c0392b;")
+        self.add_warning.setWordWrap(True)
+        self.add_warning.setVisible(False)
+        self.add_btn = QPushButton("Add")
+        self.add_btn.clicked.connect(self._add_entry)
+        add_form = QFormLayout()
+        add_form.addRow("Code:", self.code_edit)
+        add_form.addRow("Nickname:", self.nickname_edit)
+        add_form.addRow("Real name:", self.real_name_edit)
+        add_btn_row = QHBoxLayout()
+        add_btn_row.addWidget(self.add_warning, 1)
+        add_btn_row.addWidget(self.add_btn)
+        self.add_box = QGroupBox("Add entry (without programming a radio)")
+        ab = QVBoxLayout(self.add_box)
+        ab.addLayout(add_form)
+        ab.addLayout(add_btn_row)
+
+        self.table = QTableWidget(0, 3)
+        self.table.setHorizontalHeaderLabels(["Code", "Nickname", "Real name"])
+        self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.table.setSelectionMode(QAbstractItemView.SingleSelection)
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(2, QHeaderView.Stretch)
         self.table.verticalHeader().setVisible(False)
-        table_box = QGroupBox("Existing entries")
-        tb = QVBoxLayout(table_box)
+        self.table.itemSelectionChanged.connect(self._update_enablement)
+        self.table.cellDoubleClicked.connect(lambda *_: self._edit_real_name())
+        self.edit_btn = QPushButton("Edit real name...")
+        self.remove_btn = QPushButton("Remove")
+        self.edit_btn.clicked.connect(self._edit_real_name)
+        self.remove_btn.clicked.connect(self._remove_entry)
+        table_btn_row = QHBoxLayout()
+        table_btn_row.addStretch(1)
+        table_btn_row.addWidget(self.edit_btn)
+        table_btn_row.addWidget(self.remove_btn)
+        self.table_box = QGroupBox("Entries")
+        tb = QVBoxLayout(self.table_box)
         tb.addWidget(self.table)
+        tb.addLayout(table_btn_row)
 
         layout = QVBoxLayout(self)
         layout.addWidget(csv_box)
-        layout.addWidget(table_box, 1)
+        layout.addWidget(self.add_box)
+        layout.addWidget(self.table_box, 1)
+
+        self._update_enablement()
 
     def _open_existing(self):
         path, _ = QFileDialog.getOpenFileName(self, "Open DTMF CSV", "", "CSV (*.csv)")
@@ -81,47 +140,135 @@ class DtmfTab(QWidget):
         self.refresh_table()
 
     def refresh_table(self):
-        path = self.csv_edit.text()
-        self.table.setRowCount(0)
-        if not path or not os.path.exists(path) or os.path.getsize(path) == 0:
-            self.csv_changed.emit()
-            return
-        try:
-            with open(path, "r", newline="", encoding="utf-8") as f:
-                reader = csv.reader(f)
-                rows = list(reader)
-        except OSError as e:
-            QMessageBox.warning(self, "Cannot read CSV", str(e))
-            return
-        if rows and rows[0] == ["code", "nickname"]:
-            rows = rows[1:]
-        self.table.setRowCount(len(rows))
-        for r, row in enumerate(rows):
-            code = row[0] if len(row) > 0 else ""
-            nick = row[1] if len(row) > 1 else ""
-            self.table.setItem(r, 0, QTableWidgetItem(code))
-            self.table.setItem(r, 1, QTableWidgetItem(nick))
+        path = self.csv_path()
+        self._entries = []
+        self._error = None
+        if path:
+            try:
+                self._entries = radijator.load_dtmf_log(path)
+            except radijator.DtmfLogError as e:
+                self._error = f"{e}\nFix the file by hand, then Reload."
+            except OSError as e:
+                self._error = f"Cannot read {path}: {e}"
+        self._show_entries()
+
+    def _show_entries(self, select_code: str | None = None):
+        self.error_label.setText(self._error or "")
+        self.error_label.setVisible(self._error is not None)
+        self.table.setRowCount(len(self._entries))
+        for r, e in enumerate(self._entries):
+            self.table.setItem(r, 0, QTableWidgetItem(e.code))
+            self.table.setItem(r, 1, QTableWidgetItem(e.nickname))
+            self.table.setItem(r, 2, QTableWidgetItem(e.real_name))
+            if e.code == select_code:
+                self.table.selectRow(r)
+        self.table_box.setTitle(f"Entries ({len(self._entries)})")
+        code = self.code_edit.text().strip()
+        if not radijator.DTMF_CODE_RE.match(code) or code in self.existing_codes():
+            self.code_edit.setText(self.next_code() or "")
+        self._update_enablement()
         self.csv_changed.emit()
 
+    def _selected_entry(self):
+        rows = self.table.selectionModel().selectedRows()
+        if not rows:
+            return None
+        return self._entries[rows[0].row()]
+
+    def _update_enablement(self):
+        code = self.code_edit.text().strip()
+        duplicate = bool(radijator.DTMF_CODE_RE.match(code)) and (
+            code in self.existing_codes()
+        )
+        self.code_edit.setStyleSheet("background-color: #f5b7b1;" if duplicate else "")
+        self.add_warning.setText(f"{code} is already in the log." if duplicate else "")
+        self.add_warning.setVisible(duplicate)
+
+        usable = bool(self.csv_path()) and self._error is None and not self._running
+        self.add_box.setEnabled(usable)
+        self.add_btn.setEnabled(
+            usable
+            and bool(radijator.DTMF_CODE_RE.match(code))
+            and not duplicate
+            and bool(self.nickname_edit.text().strip())
+        )
+        selected = usable and self._selected_entry() is not None
+        self.edit_btn.setEnabled(selected)
+        self.remove_btn.setEnabled(selected)
+        for btn in (self.open_btn, self.new_btn):
+            btn.setEnabled(not self._running)
+        self.reload_btn.setEnabled(bool(self.csv_path()) and not self._running)
+
+    def _mutate(self, fn, *args, select_code: str | None = None) -> bool:
+        try:
+            self._entries = fn(self.csv_path(), *args)
+        except radijator.DtmfLogError as e:
+            QMessageBox.warning(self, "DTMF log", str(e))
+            self.refresh_table()
+            return False
+        except OSError as e:
+            QMessageBox.warning(self, "Cannot write CSV", str(e))
+            return False
+        self._show_entries(select_code)
+        return True
+
+    def _add_entry(self):
+        code = self.code_edit.text().strip()
+        if self._mutate(
+            radijator.add_dtmf_entry,
+            code,
+            self.nickname_edit.text(),
+            self.real_name_edit.text(),
+        ):
+            self.nickname_edit.clear()
+            self.real_name_edit.clear()
+            self.code_edit.setText(self.next_code() or "")
+
+    def _edit_real_name(self):
+        entry = self._selected_entry()
+        if entry is None or not self.edit_btn.isEnabled():
+            return
+        text, ok = QInputDialog.getText(
+            self,
+            "Edit real name",
+            f"Real name for {entry.code} ({entry.nickname}):",
+            text=entry.real_name,
+        )
+        if ok:
+            self._mutate(
+                radijator.update_dtmf_real_name,
+                entry.code,
+                text,
+                select_code=entry.code,
+            )
+
+    def _remove_entry(self):
+        entry = self._selected_entry()
+        if entry is None:
+            return
+        who = ", ".join(x for x in (entry.nickname, entry.real_name) if x)
+        answer = QMessageBox.question(
+            self,
+            "Remove entry",
+            f"Remove {entry.code} ({who}) from the log? The radio keeps its code.",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if answer == QMessageBox.Yes:
+            self._mutate(radijator.remove_dtmf_entry, entry.code)
+
     def existing_codes(self) -> set:
-        codes = set()
-        for r in range(self.table.rowCount()):
-            item = self.table.item(r, 0)
-            if item and radijator.DTMF_CODE_RE.match(item.text().strip()):
-                codes.add(item.text().strip())
-        return codes
+        return {e.code for e in self._entries}
+
+    def next_code(self) -> str | None:
+        return radijator.next_dtmf_code(self._entries)
+
+    def has_error(self) -> bool:
+        return self._error is not None
 
     def csv_path(self) -> str:
         return self.csv_edit.text().strip()
 
-    def last_code(self) -> str | None:
-        rows = self.table.rowCount()
-        if rows == 0:
-            return None
-        item = self.table.item(rows - 1, 0)
-        if item and radijator.DTMF_CODE_RE.match(item.text()):
-            return item.text()
-        return None
-
     def set_running(self, running: bool):
-        self.csv_edit.setEnabled(not running)
+        self._running = running
+        self._update_enablement()

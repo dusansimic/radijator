@@ -146,23 +146,13 @@ class MainWindow(QMainWindow):
         self.program_tab.set_dtmf_visible(checked)
         if checked:
             self._sync_taken_dtmf_codes()
-        if checked and not self.program_tab.dtmf_code():
-            last = self.dtmf_tab.last_code()
-            self.program_tab.set_dtmf_code(
-                self._next_free_dtmf_code(last) if last else "*001#"
-            )
 
     def _sync_taken_dtmf_codes(self):
-        self.program_tab.set_taken_dtmf_codes(self.dtmf_tab.existing_codes())
-
-    def _next_free_dtmf_code(self, last: str) -> str:
         taken = self.dtmf_tab.existing_codes()
-        nxt = radijator._next_dtmf_code(last)
-        for _ in range(1000):
-            if nxt not in taken:
-                return nxt
-            nxt = radijator._next_dtmf_code(nxt)
-        return nxt
+        self.program_tab.set_taken_dtmf_codes(taken)
+        code = self.program_tab.dtmf_code()
+        if not code or code in taken:
+            self.program_tab.set_dtmf_code(self.dtmf_tab.next_code() or "")
 
     def _start_worker(self, target, kwargs, with_progress: bool):
         if self._worker and self._worker.isRunning():
@@ -194,10 +184,8 @@ class MainWindow(QMainWindow):
             and self.program_tab.current_mode() in UPLOAD_MODES
         ):
             self.dtmf_tab.refresh_table()
-            last = self.dtmf_tab.last_code()
-            if last:
-                self.program_tab.set_dtmf_code(self._next_free_dtmf_code(last))
-            self.program_tab.clear_dtmf_nickname()
+            self.program_tab.set_dtmf_code(self.dtmf_tab.next_code() or "")
+            self.program_tab.clear_dtmf_identity()
 
     def _run_program(self, kwargs: dict):
         mode = kwargs.get("mode")
@@ -218,7 +206,14 @@ class MainWindow(QMainWindow):
                     self, "Missing input", "DTMF code must match *ddd#."
                 )
                 return
-            self._sync_taken_dtmf_codes()
+            self.dtmf_tab.refresh_table()
+            if self.dtmf_tab.has_error():
+                QMessageBox.warning(
+                    self,
+                    "DTMF log error",
+                    "Fix the DTMF CSV first (see DTMF tab).",
+                )
+                return
             if code in self.dtmf_tab.existing_codes():
                 QMessageBox.warning(
                     self,
@@ -232,6 +227,7 @@ class MainWindow(QMainWindow):
                 "dtmf_csv": csv_path,
                 "dtmf_code": code,
                 "dtmf_nickname": nickname,
+                "dtmf_real_name": self.program_tab.dtmf_real_name(),
             }
         missing = self._validate_program(kwargs)
         if missing:
